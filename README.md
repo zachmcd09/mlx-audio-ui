@@ -60,7 +60,7 @@ This project consists of:
 
 ## Prerequisites
 
-*   **Python:** 3.9 or higher recommended.
+*   **Python:** 3.10.14 or higher recommended.
 *   **Pip:** Python package installer (usually comes with Python).
 *   **Node.js:** LTS version recommended (includes npm). Alternatively, use `yarn`.
 *   **Operating System:** macOS with Apple Silicon (M1/M2/M3) is required for MLX acceleration.
@@ -97,8 +97,10 @@ This project consists of:
     *   Install Node.js dependencies:
         ```bash
         npm install
-        # or
-        # yarn install
+        ```
+        or
+        ```bash
+        yarn install
         ```
 
 ## Usage
@@ -108,7 +110,10 @@ This project consists of:
     *   From the **root** project directory (`mlx-audio-ui`), run the Flask app:
         ```bash
         flask run
-        # Or: python app.py
+        ```
+        or
+        ```bash
+        python app.py
         ```
     *   The backend will typically start on `http://127.0.0.1:5000`.
 

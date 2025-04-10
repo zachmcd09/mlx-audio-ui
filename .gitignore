@@ -20,7 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 .python-version
-
+requirements-dev.txt
 # Virtual Environment
 venv/
 ENV/

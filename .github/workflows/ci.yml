@@ -1,0 +1,160 @@
+# .github/workflows/ci.yml
+name: MLX Audio UI CI
+
+on:
+  push:
+    branches: [ main ] # Or your primary development branch
+  pull_request:
+    branches: [ main ] # Or your primary development branch
+
+jobs:
+  lint-and-static-analysis:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # Match project requirement
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Match project requirement or LTS
+
+      - name: Install Python Linters (if needed, or use pre-commit)
+        run: |
+          pip install flake8 mypy # Add others as defined
+          # Consider running pre-commit install and pre-commit run --all-files
+
+      - name: Run Python Linters/Type Check
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          mypy . --ignore-missing-imports # Adjust mypy config as needed
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run Frontend Lint & Type Check
+        working-directory: ./frontend
+        run: |
+          npm run lint
+          npm run build # tsc --noEmit is part of the build script
+
+  backend-tests-linux:
+    name: Backend Tests (Linux, Mocked MLX)
+    runs-on: ubuntu-latest
+    needs: lint-and-static-analysis # Run after linting passes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # Cache pip dependencies
+
+      - name: Install Python Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run Pytest (excluding MLX-required tests)
+        run: pytest -m "not mlx_required" --cov=./ --cov-report=xml # Run tests not marked with mlx_required
+
+      # Optional: Upload coverage report
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }} # Add secret in GitHub settings
+      #     files: ./coverage.xml
+      #     fail_ci_if_error: true
+
+  frontend-tests-linux:
+    name: Frontend Tests (Vitest)
+    runs-on: ubuntu-latest
+    needs: lint-and-static-analysis # Run after linting passes
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Cache npm dependencies
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run Vitest Unit & Integration Tests
+        working-directory: ./frontend
+        run: npm run test:coverage # Run tests with coverage
+
+      # Optional: Upload coverage report
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     working-directory: ./frontend # Specify frontend directory
+      #     files: ./coverage/lcov.info # Default lcov path for istanbul
+      #     fail_ci_if_error: true
+
+  e2e-and-mlx-tests-macos:
+    name: E2E & MLX Tests (macOS)
+    # IMPORTANT: Choose the correct runner label.
+    # Use GitHub-hosted larger runners if available (e.g., macos-14-arm64)
+    # Or use labels for your self-hosted Apple Silicon runners (e.g., [self-hosted, macOS, ARM64])
+    runs-on: macos-latest # Placeholder - CHANGE THIS to your specific macOS ARM64 runner label
+    needs: [backend-tests-linux, frontend-tests-linux] # Run after other tests pass
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          # No pip caching needed here if dependencies differ significantly or runner is ephemeral
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # No npm caching needed here
+
+      - name: Install Python Dependencies (including MLX)
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps # Installs browsers needed by Playwright
+
+      - name: Run MLX-dependent Backend Tests (if any)
+        run: pytest -m "mlx_required" # Run only tests marked with mlx_required
+
+      - name: Run Playwright E2E Tests
+        working-directory: ./frontend # Run from frontend dir
+        run: npm run test:e2e # Uses the script defined in frontend/package.json
+
+      # Optional: Upload Playwright report artifact
+      # - name: Upload Playwright Report
+      #   if: always() # Run even if tests fail
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: playwright-report
+      #     path: frontend/playwright-report/ # Default report path
+      #     retention-days: 30
