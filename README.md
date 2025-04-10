@@ -1,229 +1,173 @@
-# MLX-Audio
+# MLX Audio UI
 
-A text-to-speech (TTS) and Speech-to-Speech (STS) library built on Apple's MLX framework, providing efficient speech synthesis on Apple Silicon.
+*A web interface for real-time text-to-speech using MLX.*
+
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+<!-- Add other badges here (Build Status, Python Version, etc.) once CI/CD is set up -->
+
+## Description
+
+**MLX Audio UI** provides an easy-to-use web interface for experimenting with text-to-speech (TTS) models accelerated by Apple's MLX framework. It features a Python/MLX backend for audio generation and a React/TypeScript frontend for user interaction, delivering real-time streaming audio playback directly in your browser.
+
+This project consists of:
+*   A core Python package (`mlx_audio`) containing MLX implementations of TTS models (like Bark, Kokoro) and potentially audio codecs.
+*   A Flask server (`app.py`) that exposes the TTS functionality via an API.
+*   A modern React/TypeScript frontend (`frontend`) providing the user interface and handling audio streaming playback.
+
+## Visuals
+
+*(Placeholder for a screenshot or GIF of the UI)*
+![MLX Audio UI Screenshot](placeholder.png)
+
+## Table of Contents
+
+*   [Features](#features)
+*   [Project Structure](#project-structure)
+*   [Prerequisites](#prerequisites)
+*   [Installation](#installation)
+*   [Usage](#usage)
+*   [Configuration](#configuration)
+*   [Examples](#examples)
+*   [Technologies Used](#technologies-used)
+*   [Contributing](#contributing)
+*   [Code of Conduct](#code-of-conduct)
+*   [Support](#support)
+*   [License](#license)
 
 ## Features
 
-- Fast inference on Apple Silicon (M series chips)
-- Multiple language support
-- Voice customization options
-- Adjustable speech speed control (0.5x to 2.0x)
-- Interactive web interface with 3D audio visualization
-- REST API for TTS generation
-- Quantization support for optimized performance
-- Direct access to output files via Finder/Explorer integration
+*   **Real-time Text-to-Speech:** Generate speech from text using MLX-accelerated models.
+*   **Web-Based Interface:** Easy-to-use UI accessible via a web browser.
+*   **Streaming Audio Playback:** Hear the generated audio almost instantly thanks to streaming via the Web Audio API.
+*   **Model Support:** Leverages models implemented in the `mlx_audio` package (e.g., Bark, Kokoro).
+*   **Adjustable Playback Speed:** Control the speed of the audio playback.
+*   **Clear Status Indicators:** See the current state (Idle, Buffering, Playing, Paused, Error).
+*   **(Future):** Potential for exploring audio codecs, speech-to-speech, and other audio tasks.
+
+## Project Structure
+
+```
+.
+├── app.py              # Flask backend server
+├── frontend/           # React/TypeScript frontend SPA
+├── mlx_audio/          # Core MLX audio processing library (Python)
+├── examples/           # Example scripts and projects
+├── requirements.txt    # Backend Python dependencies
+├── setup.py            # Python package setup for mlx_audio
+├── LICENSE             # Apache 2.0 License file
+└── README.md           # This file
+```
+
+## Prerequisites
+
+*   **Python:** 3.9 or higher recommended.
+*   **Pip:** Python package installer (usually comes with Python).
+*   **Node.js:** LTS version recommended (includes npm). Alternatively, use `yarn`.
+*   **Operating System:** macOS with Apple Silicon (M1/M2/M3) is required for MLX acceleration.
+*   **Git:** For cloning the repository.
 
 ## Installation
 
-```bash
-# Install the package
-pip install mlx-audio
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/mlx-audio-ui.git
+    cd mlx-audio-ui
+    ```
 
-# For web interface and API dependencies
-pip install -r requirements.txt
-```
+2.  **Backend Setup:**
+    *   Create and activate a Python virtual environment:
+        ```bash
+        python3 -m venv venv
+        source venv/bin/activate
+        # On Windows use `venv\Scripts\activate`
+        ```
+    *   Install Python dependencies:
+        ```bash
+        pip install -r requirements.txt
+        # Or, for development including mlx_audio package:
+        # pip install -e .
+        ```
+    *   *(Note: Model weights might be downloaded automatically on first run. Check specific model documentation within `mlx_audio` if needed.)*
 
-### Quick Start
+3.  **Frontend Setup:**
+    *   Navigate to the frontend directory:
+        ```bash
+        cd frontend
+        ```
+    *   Install Node.js dependencies:
+        ```bash
+        npm install
+        # or
+        # yarn install
+        ```
 
-To generate audio with an LLM use:
+## Usage
 
-```bash
-# Basic usage
-mlx_audio.tts.generate --text "Hello, world"
+1.  **Start the Backend Server:**
+    *   Ensure your virtual environment is activated (`source venv/bin/activate`).
+    *   From the **root** project directory (`mlx-audio-ui`), run the Flask app:
+        ```bash
+        flask run
+        # Or: python app.py
+        ```
+    *   The backend will typically start on `http://127.0.0.1:5000`.
 
-# Specify prefix for output file
-mlx_audio.tts.generate --text "Hello, world" --file_prefix hello
+2.  **Start the Frontend Development Server:**
+    *   In a **new terminal**, navigate to the `frontend` directory:
+        ```bash
+        cd frontend
+        ```
+    *   Run the Vite development server:
+        ```bash
+        npm run dev
+        ```
+        or
+        ```bash
+        yarn dev
+        ```
+    *   The frontend will typically start on `http://localhost:5173` (check terminal output).
 
-# Adjust speaking speed (0.5-2.0)
-mlx_audio.tts.generate --text "Hello, world" --speed 1.4
-```
+3.  **Access the UI:**
+    *   Open your web browser and navigate to the frontend URL (e.g., `http://localhost:5173`).
+    *   Paste your desired text into the input area.
+    *   Click the "Play" button to start audio synthesis and playback.
 
-### How to call from python
+## Configuration
 
-To generate audio with an LLM use:
+*(Placeholder: Mention any key configuration options here, e.g., environment variables for model selection, if applicable.)*
 
-```python
-from mlx_audio.tts.generate import generate_audio
+Currently, configuration options (like model selection) might need to be adjusted directly in the source code (`app.py` or `mlx_audio` defaults).
 
-# Example: Generate an audiobook chapter as mp3 audio
-generate_audio(
-    text=("In the beginning, the universe was created...\n"
-        "...or the simulation was booted up."),
-    model_path="prince-canuma/Kokoro-82M",
-    voice="af_heart",
-    speed=1.2,
-    lang_code="a", # Kokoro: (a)f_heart, or comment out for auto
-    file_prefix="audiobook_chapter1",
-    audio_format="wav",
-    sample_rate=24000,
-    join_audio=True,
-    verbose=True  # Set to False to disable print messages
-)
+## Examples
 
-print("Audiobook chapter successfully generated!")
+The `examples/` directory contains scripts and projects demonstrating how to use the `mlx_audio` library or the application components.
 
-```
+*   **`bible-audiobook`:** An example project for generating an audiobook version of the Bible. See `examples/bible-audiobook/README.md` for details.
 
-### Web Interface & API Server
+## Technologies Used
 
-MLX-Audio includes a web interface with a 3D visualization that reacts to audio frequencies. The interface allows you to:
+*   **Backend:** Python, MLX, Flask
+*   **Frontend:** React, TypeScript, Vite, Tailwind CSS, Zustand, Web Audio API
+*   **Build/Environment:** Node.js, Pip
 
-1. Generate TTS with different voices and speed settings
-2. Upload and play your own audio files
-3. Visualize audio with an interactive 3D orb
-4. Automatically saves generated audio files to the outputs directory in the current working folder
-5. Open the output folder directly from the interface (when running locally)
+## Contributing
 
-#### Features
+Contributions are welcome! Please see `CONTRIBUTING.md` for details on how to set up your development environment, coding standards, testing procedures, and the pull request process.
 
-- **Multiple Voice Options**: Choose from different voice styles (AF Heart, AF Nova, AF Bella, BF Emma)
-- **Adjustable Speech Speed**: Control the speed of speech generation with an interactive slider (0.5x to 2.0x)
-- **Real-time 3D Visualization**: A responsive 3D orb that reacts to audio frequencies
-- **Audio Upload**: Play and visualize your own audio files
-- **Auto-play Option**: Automatically play generated audio
-- **Output Folder Access**: Convenient button to open the output folder in your system's file explorer
+*(Note: `CONTRIBUTING.md` needs to be created)*
 
-To start the web interface and API server:
+By contributing, you agree that your contributions will be licensed under the Apache License 2.0.
 
-```bash
-# Using the command-line interface
-mlx_audio.server
+## Code of Conduct
 
-# With custom host and port
-mlx_audio.server --host 0.0.0.0 --port 9000
+This project adheres to a Code of Conduct. Please see `CODE_OF_CONDUCT.md` for details.
 
-# With verbose logging
-mlx_audio.server --verbose
-```
+*(Note: `CODE_OF_CONDUCT.md` needs to be created, likely adopting the Contributor Covenant)*
 
-Available command line arguments:
-- `--host`: Host address to bind the server to (default: 127.0.0.1)
-- `--port`: Port to bind the server to (default: 8000)
+## Support
 
-Then open your browser and navigate to:
-```
-http://127.0.0.1:8000
-```
+Please use the [GitHub Issue Tracker](https://github.com/your-username/mlx-audio-ui/issues) for bug reports, feature requests, and questions.
 
-#### API Endpoints
-
-The server provides the following REST API endpoints:
-
-- `POST /tts`: Generate TTS audio
-  - Parameters (form data):
-    - `text`: The text to convert to speech (required)
-    - `voice`: Voice to use (default: "af_heart")
-    - `speed`: Speech speed from 0.5 to 2.0 (default: 1.0)
-  - Returns: JSON with filename of generated audio
-
-- `GET /audio/{filename}`: Retrieve generated audio file
-
-- `POST /play`: Play audio directly from the server
-  - Parameters (form data):
-    - `filename`: The filename of the audio to play (required)
-  - Returns: JSON with status and filename
-
-- `POST /stop`: Stop any currently playing audio
-  - Returns: JSON with status
-
-- `POST /open_output_folder`: Open the output folder in the system's file explorer
-  - Returns: JSON with status and path
-  - Note: This feature only works when running the server locally
-
-> Note: Generated audio files are stored in `~/.mlx_audio/outputs` by default, or in a fallback directory if that location is not writable.
-
-## Models
-
-### Kokoro
-
-Kokoro is a multilingual TTS model that supports various languages and voice styles.
-
-#### Example Usage
-
-```python
-from mlx_audio.tts.models.kokoro import KokoroPipeline
-from mlx_audio.tts.utils import load_model
-from IPython.display import Audio
-import soundfile as sf
-
-# Initialize the model
-model_id = 'prince-canuma/Kokoro-82M'
-model = load_model(model_id)
-
-# Create a pipeline with American English
-pipeline = KokoroPipeline(lang_code='a', model=model, repo_id=model_id)
-
-# Generate audio
-text = "The MLX King lives. Let him cook!"
-for _, _, audio in pipeline(text, voice='af_heart', speed=1, split_pattern=r'\n+'):
-    # Display audio in notebook (if applicable)
-    display(Audio(data=audio, rate=24000, autoplay=0))
-
-    # Save audio to file
-    sf.write('audio.wav', audio[0], 24000)
-```
-
-#### Language Options
-
-- 🇺🇸 `'a'` - American English
-- 🇬🇧 `'b'` - British English
-- 🇯🇵 `'j'` - Japanese (requires `pip install misaki[ja]`)
-- 🇨🇳 `'z'` - Mandarin Chinese (requires `pip install misaki[zh]`)
-
-### CSM (Conversational Speech Model)
-
-CSM is a model from Sesame that allows you text-to-speech and to customize voices using reference audio samples.
-
-#### Example Usage
-
-```bash
-# Generate speech using CSM-1B model with reference audio
-python -m mlx_audio.tts.generate --model mlx-community/csm-1b --text "Hello from Sesame." --play --ref_audio ./conversational_a.wav
-```
-
-You can pass any audio to clone the voice from or download sample audio file from [here](https://huggingface.co/mlx-community/csm-1b/tree/main/prompts).
-
-## Advanced Features
-
-### Quantization
-
-You can quantize models for improved performance:
-
-```python
-from mlx_audio.tts.utils import quantize_model, load_model
-import json
-import mlx.core as mx
-
-model = load_model(repo_id='prince-canuma/Kokoro-82M')
-config = model.config
-
-# Quantize to 8-bit
-group_size = 64
-bits = 8
-weights, config = quantize_model(model, config, group_size, bits)
-
-# Save quantized model
-with open('./8bit/config.json', 'w') as f:
-    json.dump(config, f)
-
-mx.save_safetensors("./8bit/kokoro-v1_0.safetensors", weights, metadata={"format": "mlx"})
-```
-
-## Requirements
-
-- MLX
-- Python 3.8+
-- Apple Silicon Mac (for optimal performance)
-- For the web interface and API:
-  - FastAPI
-  - Uvicorn
-  
 ## License
 
-[MIT License](LICENSE)
-
-## Acknowledgements
-
-- Thanks to the Apple MLX team for providing a great framework for building TTS and STS models.
-- This project uses the Kokoro model architecture for text-to-speech synthesis.
-- The 3D visualization uses Three.js for rendering.
+Distributed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for more information.
