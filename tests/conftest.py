@@ -2,6 +2,14 @@
 # Shared fixtures for pytest tests will go here.
 
 import pytest
+import sys
+import os
+
+# Add project root to sys.path to allow importing 'app'
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from app import app as flask_app # Import your Flask app instance
 
 @pytest.fixture(scope='module')

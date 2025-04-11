@@ -92,7 +92,7 @@ def stream_tts_audio(text_to_speak, voice, speed):
     """
     Generator function that yields raw PCM audio chunks using threaded lookahead.
     """
-    global tts_pipeline
+    # global tts_pipeline # Removed unnecessary global
     if tts_pipeline is None:
         print("Error: TTS pipeline not initialized.", file=sys.stderr)
         yield b'' # Yield empty bytes on error

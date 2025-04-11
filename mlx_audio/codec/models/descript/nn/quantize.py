@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union # Import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -82,7 +82,7 @@ class ResidualVectorQuantize(nn.Module):
             for i in range(n_codebooks)
         ]
 
-    def __call__(self, z, n_quantizers: int = None):
+    def __call__(self, z, n_quantizers: Optional[int] = None): # Use Optional[int]
         z_q = 0
         residual = z
         commitment_loss = 0
@@ -118,7 +118,7 @@ class ResidualVectorQuantize(nn.Module):
         return z_q, codes, latents, commitment_loss, codebook_loss
 
     def from_codes(self, codes: mx.array):
-        z_q = 0.0
+        z_q = mx.zeros((codes.shape[0], 1, 1))  # Initialize as array with proper shape
         z_p = []
         n_codebooks = codes.shape[1]
         for i in range(n_codebooks):

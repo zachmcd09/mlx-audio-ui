@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
+import { fileURLToPath } from 'url'; // Import fileURLToPath
+
+// Get the directory name in ES module scope
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Read environment variables or use defaults
 const PORT = process.env.PORT || '5173'; // Default Vite dev server port

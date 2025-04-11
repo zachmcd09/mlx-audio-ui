@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import dataclass
 from numbers import Number
-from typing import Any, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union # Import Dict
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -87,7 +87,7 @@ class KokoroPipeline:
         if repo_id is None:
             raise ValueError("repo_id is required to load voices")
         self.model = model
-        self.voices = {}
+        self.voices: Dict[str, Any] = {} # Add type hint for voices
         if lang_code in "ab":
             try:
                 fallback = espeak.EspeakFallback(british=lang_code == "b")
@@ -198,7 +198,7 @@ class KokoroPipeline:
     def en_tokenize(
         self, tokens: List[en.MToken]
     ) -> Generator[Tuple[str, str, List[en.MToken]], None, None]:
-        tks = []
+        tks: List[en.MToken] = [] # Add type hint for tks
         pcount = 0
         for t in tokens:
             # American English: ɾ => T
@@ -230,7 +230,7 @@ class KokoroPipeline:
         model: nn.Module,
         ps: str,
         pack: torch.FloatTensor,
-        speed: Number = 1,
+        speed: float = 1.0, # Change type hint and default
     ):
         return model(ps, mx.array(pack[len(ps) - 1]), speed, return_output=True)
 
@@ -238,7 +238,7 @@ class KokoroPipeline:
         self,
         tokens: Union[str, List[en.MToken]],
         voice: str,
-        speed: Number = 1,
+        speed: float = 1.0, # Change type hint and default
         model: Optional[nn.Module] = None,
     ) -> Generator["KokoroPipeline.Result", None, None]:
         """Generate audio from either raw phonemes or pre-processed tokens.
@@ -268,7 +268,9 @@ class KokoroPipeline:
             logging.debug("Processing phonemes from raw string")
             if len(tokens) > 510:
                 raise ValueError(f"Phoneme string too long: {len(tokens)} > 510")
-            output = KokoroPipeline.infer(model, tokens, pack, speed) if model else None
+            output = None
+            if model and pack is not None: # Check pack is not None
+                output = KokoroPipeline.infer(model, tokens, pack, speed)
             yield self.Result(graphemes="", phonemes=tokens, output=output)
             return
 
@@ -283,7 +285,9 @@ class KokoroPipeline:
                 )
                 logging.warning("Truncating to 510 characters")
                 ps = ps[:510]
-            output = KokoroPipeline.infer(model, ps, pack, speed) if model else None
+            output = None
+            if model and pack is not None: # Check pack is not None
+                output = KokoroPipeline.infer(model, ps, pack, speed)
             if output is not None and output.pred_dur is not None:
                 KokoroPipeline.join_timestamps(tks, output.pred_dur)
             yield self.Result(graphemes=gs, phonemes=ps, tokens=tks, output=output)
@@ -358,7 +362,7 @@ class KokoroPipeline:
         self,
         text: Union[str, List[str]],
         voice: Optional[str] = None,
-        speed: Number = 1,
+        speed: float = 1.0, # Change type hint and default
         split_pattern: Optional[str] = r"\n+",
     ) -> Generator["KokoroPipeline.Result", None, None]:
         if voice is None:
@@ -385,11 +389,10 @@ class KokoroPipeline:
                             f"Unexpected len(ps) == {len(ps)} > 510 and ps == '{ps}'"
                         )
                         ps = ps[:510]
-                    output = (
-                        KokoroPipeline.infer(self.model, ps, pack, speed)
-                        if self.model
-                        else None
-                    )
+                    output = None
+                    if self.model and pack is not None: # Check pack is not None
+                        output = KokoroPipeline.infer(self.model, ps, pack, speed)
+
                     if output is not None and output.pred_dur is not None:
                         KokoroPipeline.join_timestamps(tks, output.pred_dur)
                     yield self.Result(
@@ -446,11 +449,10 @@ class KokoroPipeline:
                         logging.warning(f"Truncating len(ps) == {len(ps)} > 510")
                         ps = ps[:510]
 
-                    output = (
-                        KokoroPipeline.infer(self.model, ps, pack, speed)
-                        if self.model
-                        else None
-                    )
+                    output = None
+                    if self.model and pack is not None: # Check pack is not None
+                        output = KokoroPipeline.infer(self.model, ps, pack, speed)
+
                     yield self.Result(
                         graphemes=chunk,
                         phonemes=ps,

@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+from typing import Optional # Import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -94,7 +95,7 @@ class ConvTranspose1d(nn.Module):
             self._expanded_weight = self.weight
             self._expanded_groups = groups
 
-    def update(self, parameters: dict) -> nn.Module:
+    def update(self, parameters: dict) -> nn.Module: # type: ignore[override]
         super().update(parameters)
         groups = self._groups
         in_channels = self._in_channels
@@ -227,7 +228,7 @@ class StreamableConv1d(nn.Module):
             dilation=dilation,
             bias=bias,
         )
-        self._prev_xs = None
+        self._prev_xs: Optional[mx.array] = None
         self._left_pad_applied = False
         self._out_channels = out_channels
 
@@ -308,7 +309,7 @@ class StreamableConvTranspose1d(nn.Module):
             groups=groups,
             bias=bias,
         )
-        self._prev_ys = None
+        self._prev_ys: Optional[mx.array] = None
 
     def reset_state(self):
         self._prev_ys = None

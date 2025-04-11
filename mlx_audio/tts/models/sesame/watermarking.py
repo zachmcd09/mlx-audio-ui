@@ -38,22 +38,24 @@ def watermark(
     audio_array: mx.array,
     sample_rate: int,
     watermark_key: list[int],
-) -> tuple[mx.array, int]:
-    audio_array = np.array(audio_array, dtype=np.float32)
+) -> mx.array: # Return type is just mx.array
+    # Convert mx.array to np.ndarray for processing
+    audio_array_np = np.array(audio_array, dtype=np.float32)
 
     if sample_rate != 44100:
-        audio_array_44khz = resample_audio(audio_array, sample_rate, 44100)
+        audio_array_44khz = resample_audio(audio_array_np, sample_rate, 44100)
     else:
-        audio_array_44khz = audio_array
+        audio_array_44khz = audio_array_np # Use the numpy array
 
-    encoded, *_ = watermarker.encode_wav(
+    encoded_np, *_ = watermarker.encode_wav(
         audio_array_44khz, 44100, watermark_key, calc_sdr=False, message_sdr=36
     )
 
     if sample_rate != 44100:
-        encoded = resample_audio(encoded, 44100, sample_rate)
+        encoded_np = resample_audio(encoded_np, 44100, sample_rate)
 
-    return encoded
+    # Convert back to mx.array before returning
+    return mx.array(encoded_np)
 
 
 def verify(
@@ -62,10 +64,13 @@ def verify(
     sample_rate: int,
     watermark_key: list[int],
 ) -> bool:
+    # Convert mx.array to np.ndarray for processing
+    watermarked_audio_np = np.array(watermarked_audio, dtype=np.float32)
+
     if sample_rate != 44100:
-        watermarked_audio_44khz = resample_audio(watermarked_audio, sample_rate, 44100)
+        watermarked_audio_44khz = resample_audio(watermarked_audio_np, sample_rate, 44100)
     else:
-        watermarked_audio_44khz = watermarked_audio
+        watermarked_audio_44khz = watermarked_audio_np # Use the numpy array
 
     result = watermarker.decode_wav(
         watermarked_audio_44khz, 44100, phase_shift_decoding=True

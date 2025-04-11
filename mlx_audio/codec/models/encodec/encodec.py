@@ -38,12 +38,12 @@ class EncodecConfig:
     last_kernel_size: int = 7
     trim_right_ratio: float = 1.0
     compress: int = 2
-    upsampling_ratios: List[int] = None
-    target_bandwidths: List[float] = None
+    upsampling_ratios: List[int] = [] # Initialize with empty list
+    target_bandwidths: List[float] = [] # Initialize with empty list
     sampling_rate: int = 24000
     chunk_length_s: Optional[float] = None
     overlap: Optional[float] = None
-    architectures: List[str] = None
+    architectures: List[str] = [] # Initialize with empty list
 
 
 def preprocess_audio(
@@ -76,7 +76,7 @@ def preprocess_audio(
     masks = []
     for x in raw_audio:
         length = x.shape[0]
-        mask = mx.ones((length,), dtype=mx.bool_)
+        mask = mx.ones((length,), dtype=bool) # Use Python bool
         difference = max_length - length
         if difference > 0:
             mask = mx.pad(mask, (0, difference))
@@ -314,16 +314,18 @@ class EncodecResnetBlock(nn.Module):
             raise ValueError("Number of kernel sizes should match number of dilations")
 
         hidden = dim // config.compress
-        block = []
+        block: List[Union[nn.ELU, EncodecConv1d]] = [] # Explicitly type the list
         for i, (kernel_size, dilation) in enumerate(zip(kernel_sizes, dilations)):
             in_chs = dim if i == 0 else hidden
             out_chs = dim if i == len(kernel_sizes) - 1 else hidden
-            block += [nn.ELU()]
-            block += [
+            block.append(nn.ELU()) # Use append
+            block.append(
                 EncodecConv1d(config, in_chs, out_chs, kernel_size, dilation=dilation)
-            ]
-        self.block = block
+            )
+        self.block = nn.Sequential(*block) # Assign Sequential directly
 
+        # Type hint for shortcut to allow both types
+        self.shortcut: Union[EncodecConv1d, nn.Identity]
         if getattr(config, "use_conv_shortcut", True):
             self.shortcut = EncodecConv1d(config, dim, dim, kernel_size=1)
         else:
@@ -515,7 +517,7 @@ class EncodecResidualVectorQuantizer(nn.Module):
 
     def encode(
         self, embeddings: mx.array, bandwidth: Optional[float] = None
-    ) -> mx.array:
+    ) -> mx.array:  # type: ignore[override]
         """
         Encode a given input array with the specified frame rate at the given
         bandwidth. The RVQ encode method sets the appropriate number of
@@ -554,7 +556,10 @@ class Encodec(nn.Module):
         self.quantizer = EncodecResidualVectorQuantizer(self.config)
 
     def _encode_frame(
-        self, input_values: mx.array, bandwidth: float, padding_mask: mx.array
+        self, 
+        input_values: mx.array, 
+        bandwidth: float, 
+        padding_mask: Optional[mx.array] = None
     ) -> Tuple[mx.array, Optional[mx.array]]:
         """
         Encodes the given input using the underlying VQVAE.
@@ -572,22 +577,26 @@ class Encodec(nn.Module):
 
         scale = None
         if self.config.normalize:
-            # if the padding is non zero
-            input_values = input_values * padding_mask[..., None]
+            # if the padding is non zero and padding_mask is not None
+            if padding_mask is not None:
+                 input_values = input_values * padding_mask[..., None] # Add check
             mono = mx.sum(input_values, axis=2, keepdims=True) / input_values.shape[2]
             scale = mono.square().mean(axis=1, keepdims=True).sqrt() + 1e-8
             input_values = input_values / scale
 
         embeddings = self.encoder(input_values)
         codes = self.quantizer.encode(embeddings, bandwidth)
-        return codes, scale
+        if codes is None:
+            raise ValueError("Encoding failed - quantizer returned None")
+        # Ignore mypy error as runtime check ensures codes is not None and should be mx.array
+        return (codes, scale) # type: ignore[return-value]
 
     def encode(
         self,
         input_values: mx.array,
-        padding_mask: mx.array = None,
+        padding_mask: Optional[mx.array] = None, # Use Optional
         bandwidth: Optional[float] = None,
-    ) -> Tuple[mx.array, Optional[mx.array]]:
+    ) -> Tuple[mx.array, List[Optional[mx.array]]]: # Return list of scales
         """
         Encodes the input audio waveform into discrete codes.
 
@@ -630,9 +639,9 @@ class Encodec(nn.Module):
             stride = self.chunk_stride
 
         if padding_mask is None:
-            padding_mask = mx.ones(input_values.shape[:2], dtype=mx.bool_)
-        encoded_frames = []
-        scales = []
+            padding_mask = mx.ones(input_values.shape[:2], dtype=bool) # Use Python bool
+        encoded_frames: List[mx.array] = []
+        scales: List[Optional[mx.array]] = []
 
         step = chunk_length - stride
         if (input_length % stride) != step:
@@ -641,15 +650,14 @@ class Encodec(nn.Module):
             )
 
         for offset in range(0, input_length - step, stride):
-            mask = padding_mask[:, offset : offset + chunk_length].astype(mx.bool_)
+            # Attempting mx.bool_ again for astype, as it's the documented dtype
+            mask = padding_mask[:, offset : offset + chunk_length].astype(mx.bool_) # type: ignore[attr-defined]
             frame = input_values[:, offset : offset + chunk_length]
             encoded_frame, scale = self._encode_frame(frame, bandwidth, mask)
             encoded_frames.append(encoded_frame)
             scales.append(scale)
 
-        encoded_frames = mx.stack(encoded_frames)
-
-        return (encoded_frames, scales)
+        return (mx.stack(encoded_frames), scales)
 
     @staticmethod
     def _linear_overlap_add(frames: List[mx.array], stride: int):
@@ -742,7 +750,7 @@ class Encodec(nn.Module):
         audio_codes: mx.array,
         audio_scales: Union[mx.array, List[mx.array]],
         padding_mask: Optional[mx.array] = None,
-    ) -> Tuple[mx.array, mx.array]:
+    ) -> mx.array: # Should return single array
         """
         Decodes the given frames into an output audio waveform.
 

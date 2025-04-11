@@ -131,10 +131,17 @@ class Attention(nn.Module):
         self.v_proj = nn.Linear(dim, n_kv_heads * head_dim, bias=attention_bias)
         self.o_proj = nn.Linear(n_heads * head_dim, dim, bias=attention_bias)
 
+        # Safely get scale_factor, ensuring it's a float
+        rope_scaling_config = args.rope_scaling
+        if isinstance(rope_scaling_config, dict):
+            scale_factor = float(rope_scaling_config.get("factor", 1.0))
+        else:
+            scale_factor = 1.0 # Default if rope_scaling is None or not a dict
+
         self.rope = Llama3ScaledRoPE(
             self.head_dim,
             base=args.rope_theta,
-            scale_factor=args.rope_scaling.get("factor", 1.0),
+            scale_factor=scale_factor, # Use the validated float value
         )
 
     def __call__(

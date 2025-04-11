@@ -74,7 +74,7 @@ class GenerationResult:
     samples: int
     segment_idx: int
     token_count: int
-    audio_samples: int
+    # audio_samples: int # Remove duplicate definition
     audio_duration: str
     real_time_factor: float
     prompt: dict

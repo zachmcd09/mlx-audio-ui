@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Union, cast # Import Union and cast
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -138,12 +139,17 @@ class TransformerLayer(nn.Module):
 
         assert not cfg.use_conv_block, "conv-block is not supported"
         assert not cfg.cross_attention, "cross-attn is not supported"
+        # Define gating attribute with Union type hint
+        self.gating: Union[MlpGating, MlpNoGating]
         if cfg.gating:
             self.gating = MlpGating(cfg)
         else:
             # TODO: Use a better name?
             self.gating = MlpNoGating(cfg)
 
+        # Define norm attributes with Union type hint
+        self.norm1: Union[nn.LayerNorm, nn.RMSNorm]
+        self.norm2: Union[nn.LayerNorm, nn.RMSNorm]
         if cfg.norm == "layer_norm":
             self.norm1 = nn.LayerNorm(cfg.d_model, 1e-5)
             self.norm2 = nn.LayerNorm(cfg.d_model, 1e-5)
@@ -153,6 +159,9 @@ class TransformerLayer(nn.Module):
         else:
             raise ValueError(f"unsupported norm type {cfg.norm}")
 
+        # Define layer_scale attributes with Union type hint
+        self.layer_scale_1: Union[LayerScale, Id]
+        self.layer_scale_2: Union[LayerScale, Id]
         if cfg.layer_scale is not None:
             self.layer_scale_1 = LayerScale(cfg.d_model)
             self.layer_scale_2 = LayerScale(cfg.d_model)
@@ -185,7 +194,9 @@ class Transformer(nn.Module):
         xs: mx.array,
         cache: list[KVCache] | list[RotatingKVCache],
     ) -> mx.array:
-        for layer, c in zip(self.layers, cache):
+        for layer, c_untyped in zip(self.layers, cache):
+            # Explicitly cast the cache element to the expected Union type
+            c = cast(Union[KVCache, RotatingKVCache], c_untyped)
             xs = layer(xs, cache=c)
         return xs
 

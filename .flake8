@@ -1,0 +1,15 @@
+[flake8]
+# Exclude directories from linting
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    venv,
+    dev-venv
+
+# Optional: Increase max line length if needed (default is 79)
+# max-line-length = 88
+
+# Optional: Ignore specific error codes project-wide if necessary
+# ignore = E501, W503

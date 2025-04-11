@@ -1,10 +1,10 @@
 // frontend/src/store/index.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest'; // Merged imports
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { act } from '@testing-library/react'; // Import act
 import { useAppStore, PlaybackState } from './index'; // Import the hook and types
 
-// Define the initial state explicitly for resetting, including dummy actions
-const initialState = {
-  // State values
+// Define the initial state values only
+const initialStateValues = {
   inputText: '',
   displayText: '',
   playbackState: 'Idle' as PlaybackState,
@@ -13,37 +13,39 @@ const initialState = {
   voice: null as string | null,
   totalChunks: 0,
   currentChunkIndex: -1,
-  // Dummy action implementations (required for replace: true)
-  setInputText: vi.fn(),
-  setSpeed: vi.fn(),
-  setVoice: vi.fn(),
-  requestPlayback: vi.fn(),
-  requestPause: vi.fn(),
-  requestResume: vi.fn(),
-  requestStop: vi.fn(),
-  _setPlaybackState: vi.fn(),
-  _setErrorMessage: vi.fn(),
-  _clearError: vi.fn(),
-  _setTotalChunks: vi.fn(),
-  _setCurrentChunkIndex: vi.fn(),
 };
 
 describe('useAppStore', () => {
-  // Reset the store to initial state before each test
+  // Reset the store state before each test by merging initial values
   beforeEach(() => {
-    useAppStore.setState(initialState, true); // true replaces the entire state
+    // Get the original actions to avoid overwriting them
+    const originalActions = {
+        setInputText: useAppStore.getState().setInputText,
+        setSpeed: useAppStore.getState().setSpeed,
+        setVoice: useAppStore.getState().setVoice,
+        requestPlayback: useAppStore.getState().requestPlayback,
+        requestPause: useAppStore.getState().requestPause,
+        requestResume: useAppStore.getState().requestResume,
+        requestStop: useAppStore.getState().requestStop,
+        _setPlaybackState: useAppStore.getState()._setPlaybackState,
+        _setErrorMessage: useAppStore.getState()._setErrorMessage,
+        _clearError: useAppStore.getState()._clearError,
+        _setTotalChunks: useAppStore.getState()._setTotalChunks,
+        _setCurrentChunkIndex: useAppStore.getState()._setCurrentChunkIndex,
+    };
+    useAppStore.setState({ ...initialStateValues, ...originalActions }, true); // Replace state including actions
   });
 
   it('should have correct initial state', () => {
     const state = useAppStore.getState();
-    expect(state.inputText).toBe(initialState.inputText);
-    expect(state.displayText).toBe(initialState.displayText);
-    expect(state.playbackState).toBe(initialState.playbackState);
-    expect(state.errorMessage).toBe(initialState.errorMessage);
-    expect(state.speed).toBe(initialState.speed);
-    expect(state.voice).toBe(initialState.voice);
-    expect(state.totalChunks).toBe(initialState.totalChunks);
-    expect(state.currentChunkIndex).toBe(initialState.currentChunkIndex);
+    expect(state.inputText).toBe(initialStateValues.inputText); // Use initialStateValues
+    expect(state.displayText).toBe(initialStateValues.displayText); // Use initialStateValues
+    expect(state.playbackState).toBe(initialStateValues.playbackState); // Use initialStateValues
+    expect(state.errorMessage).toBe(initialStateValues.errorMessage); // Use initialStateValues
+    expect(state.speed).toBe(initialStateValues.speed); // Use initialStateValues
+    expect(state.voice).toBe(initialStateValues.voice); // Use initialStateValues
+    expect(state.totalChunks).toBe(initialStateValues.totalChunks); // Use initialStateValues
+    expect(state.currentChunkIndex).toBe(initialStateValues.currentChunkIndex); // Use initialStateValues
   });
 
   // --- Test UI-triggered Actions ---
@@ -59,8 +61,10 @@ describe('useAppStore', () => {
 
     const newText = 'This is new input text.';
 
-    // Act
-    useAppStore.getState().setInputText(newText);
+    // Act: Wrap state update in act
+    act(() => {
+      useAppStore.getState().setInputText(newText);
+    });
 
     // Assert
     const state = useAppStore.getState();
@@ -74,13 +78,17 @@ describe('useAppStore', () => {
 
   it('setSpeed should update speed', () => {
     const newSpeed = 1.5;
-    useAppStore.getState().setSpeed(newSpeed);
+    act(() => {
+      useAppStore.getState().setSpeed(newSpeed);
+    });
     expect(useAppStore.getState().speed).toBe(newSpeed);
   });
 
   it('setVoice should update voice', () => {
     const newVoice = 'test-voice-id';
-    useAppStore.getState().setVoice(newVoice);
+    act(() => {
+      useAppStore.getState().setVoice(newVoice);
+    });
     expect(useAppStore.getState().voice).toBe(newVoice);
   });
 
@@ -89,7 +97,9 @@ describe('useAppStore', () => {
     const voice = 'voice-1';
     const speed = 1.2;
 
-    useAppStore.getState().requestPlayback(text, voice, speed);
+    act(() => {
+      useAppStore.getState().requestPlayback(text, voice, speed);
+    });
 
     const state = useAppStore.getState();
     expect(state.playbackState).toBe('Buffering');
@@ -104,15 +114,21 @@ describe('useAppStore', () => {
   // --- Test Internal Actions (called by hook) ---
 
   it('_setPlaybackState should update playbackState', () => {
-    useAppStore.getState()._setPlaybackState('Playing');
+    act(() => {
+      useAppStore.getState()._setPlaybackState('Playing');
+    });
     expect(useAppStore.getState().playbackState).toBe('Playing');
-    useAppStore.getState()._setPlaybackState('Paused');
+    act(() => {
+      useAppStore.getState()._setPlaybackState('Paused');
+    });
     expect(useAppStore.getState().playbackState).toBe('Paused');
   });
 
   it('_setErrorMessage should update errorMessage and set state to Error', () => {
     const errorMsg = 'TTS failed';
-    useAppStore.getState()._setErrorMessage(errorMsg);
+    act(() => {
+      useAppStore.getState()._setErrorMessage(errorMsg);
+    });
     const state = useAppStore.getState();
     expect(state.errorMessage).toBe(errorMsg);
     expect(state.playbackState).toBe('Error');
@@ -120,23 +136,37 @@ describe('useAppStore', () => {
 
   it('_clearError should clear errorMessage and reset state if in Error state', () => {
     // Arrange: Set error state
-    useAppStore.setState({ errorMessage: 'Some error', playbackState: 'Error' });
+    act(() => {
+      useAppStore.setState({ errorMessage: 'Some error', playbackState: 'Error' });
+    });
 
     // Act
-    useAppStore.getState()._clearError();
+    act(() => {
+      useAppStore.getState()._clearError();
+    });
 
     // Assert
     const state = useAppStore.getState();
-    expect(state.errorMessage).toBeNull();
-    expect(state.playbackState).toBe('Idle'); // Assumes reset to Idle
+    expect(state.inputText).toBe(initialStateValues.inputText);
+    expect(state.displayText).toBe(initialStateValues.displayText);
+    expect(state.playbackState).toBe(initialStateValues.playbackState);
+    expect(state.errorMessage).toBe(initialStateValues.errorMessage);
+    expect(state.speed).toBe(initialStateValues.speed);
+    expect(state.voice).toBe(initialStateValues.voice);
+    expect(state.totalChunks).toBe(initialStateValues.totalChunks);
+    expect(state.currentChunkIndex).toBe(initialStateValues.currentChunkIndex);
   });
 
    it('_clearError should only clear errorMessage if not in Error state', () => {
     // Arrange: Set non-error state with an old error message (unlikely scenario, but test)
-    useAppStore.setState({ errorMessage: 'Old error', playbackState: 'Playing' });
+    act(() => {
+      useAppStore.setState({ errorMessage: 'Old error', playbackState: 'Playing' });
+    });
 
     // Act
-    useAppStore.getState()._clearError();
+    act(() => {
+      useAppStore.getState()._clearError();
+    });
 
     // Assert
     const state = useAppStore.getState();
@@ -145,12 +175,16 @@ describe('useAppStore', () => {
   });
 
   it('_setTotalChunks should update totalChunks', () => {
-    useAppStore.getState()._setTotalChunks(15);
+    act(() => {
+      useAppStore.getState()._setTotalChunks(15);
+    });
     expect(useAppStore.getState().totalChunks).toBe(15);
   });
 
   it('_setCurrentChunkIndex should update currentChunkIndex', () => {
-    useAppStore.getState()._setCurrentChunkIndex(3);
+    act(() => {
+      useAppStore.getState()._setCurrentChunkIndex(3);
+    });
     expect(useAppStore.getState().currentChunkIndex).toBe(3);
   });
 

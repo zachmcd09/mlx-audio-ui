@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union # Import Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -146,6 +146,7 @@ class ConvNeXtBlock(nn.Module):
         # depthwise conv
         self.dwconv = nn.Conv1d(dim, dim, kernel_size=7, padding=3, groups=dim)
         self.adanorm = adanorm_num_embeddings is not None
+        self.norm: Union[AdaLayerNorm, nn.LayerNorm] # Add type hint
         if adanorm_num_embeddings:
             self.norm = AdaLayerNorm(adanorm_num_embeddings, dim, eps=1e-6)
         else:
@@ -162,11 +163,15 @@ class ConvNeXtBlock(nn.Module):
     ) -> mx.array:
         residual = x
         x = self.dwconv(x)
-        if self.adanorm:
+        # Explicitly check type of self.norm
+        if isinstance(self.norm, AdaLayerNorm):
             assert cond_embedding_id is not None
-            x = self.norm(x, cond_embedding_id)
-        else:
+            x = self.norm(x, cond_embedding_id=cond_embedding_id)
+        elif isinstance(self.norm, nn.LayerNorm):
             x = self.norm(x)
+        else:
+            # Should not happen based on __init__
+            raise TypeError("Unexpected type for self.norm")
         x = self.pwconv1(x)
         x = self.act(x)
         x = self.pwconv2(x)
@@ -208,6 +213,7 @@ class VocosBackbone(nn.Module):
         self.input_channels = input_channels
         self.embed = nn.Conv1d(input_channels, dim, kernel_size=7, padding=3)
         self.adanorm = adanorm_num_embeddings is not None
+        self.norm: Union[AdaLayerNorm, nn.LayerNorm] # Add type hint
         if adanorm_num_embeddings:
             self.norm = AdaLayerNorm(adanorm_num_embeddings, dim, eps=1e-6)
         else:
@@ -229,12 +235,17 @@ class VocosBackbone(nn.Module):
 
         x = self.embed(x)
 
-        if self.adanorm:
+        # Explicitly check type of self.norm
+        if isinstance(self.norm, AdaLayerNorm):
             assert bandwidth_id is not None
-            x = self.norm(x, bandwidth_id)
-        else:
+            x = self.norm(x, cond_embedding_id=bandwidth_id)
+        elif isinstance(self.norm, nn.LayerNorm):
             x = self.norm(x)
+        else:
+            # Should not happen based on __init__
+            raise TypeError("Unexpected type for self.norm")
         for conv_block in self.convnext:
+            # Pass bandwidth_id down to ConvNeXtBlock which passes it to AdaLayerNorm
             x = conv_block(x, cond_embedding_id=bandwidth_id)
         x = self.final_layer_norm(x)
         return x
@@ -257,15 +268,16 @@ class Vocos(nn.Module):
         """
         Class method to create a new Vocos model instance from hyperparameters stored in a yaml configuration file.
         """
-        config = SimpleNamespace(**config)
+        # Use SimpleNamespace for type hint
+        hparams = SimpleNamespace(**config)
 
-        if "MelSpectrogramFeatures" in config.feature_extractor["class_path"]:
-            feature_extractor_init_args = config.feature_extractor["init_args"]
+        if "MelSpectrogramFeatures" in hparams.feature_extractor["class_path"]:
+            feature_extractor_init_args = hparams.feature_extractor["init_args"]
             feature_extractor = MelSpectrogramFeatures(**feature_extractor_init_args)
-        elif "EncodecFeatures" in config.feature_extractor["class_path"]:
-            feature_extractor = EncodecFeatures(**config.feature_extractor["init_args"])
-        backbone = VocosBackbone(**config.backbone["init_args"])
-        head = ISTFTHead(**config.head["init_args"])
+        elif "EncodecFeatures" in hparams.feature_extractor["class_path"]:
+            feature_extractor = EncodecFeatures(**hparams.feature_extractor["init_args"])
+        backbone = VocosBackbone(**hparams.backbone["init_args"])
+        head = ISTFTHead(**hparams.head["init_args"])
         model = cls(feature_extractor=feature_extractor, backbone=backbone, head=head)
         return model
 

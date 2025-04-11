@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path # Import Path
 import sys
 from typing import Optional
 
@@ -89,7 +90,7 @@ def generate_audio(
         player = AudioPlayer() if play else None
 
         # Load model
-        model = load_model(model_path=model_path)
+        model = load_model(model_path=Path(model_path)) # Convert str to Path
         print(
             f"\n\033[94mModel:\033[0m {model_path}\n"
             f"\033[94mText:\033[0m {text}\n"
@@ -112,7 +113,7 @@ def generate_audio(
         audio_list = []
         file_name = f"{file_prefix}.{audio_format}"
         for i, result in enumerate(results):
-            if play:
+            if play and player is not None: # Add check for None
                 player.queue_audio(result.audio)
             if join_audio:
                 audio_list.append(result.audio)
@@ -145,7 +146,7 @@ def generate_audio(
             audio = mx.concatenate(audio_list, axis=0)
             sf.write(f"{file_prefix}.{audio_format}", audio, 24000)
 
-        if play:
+        if play and player is not None: # Add check for None
             player.wait_for_drain()
             player.stop()
 

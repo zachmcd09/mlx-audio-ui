@@ -1,7 +1,7 @@
 import math
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional # Import Any
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -114,7 +114,7 @@ def _flatten_codebooks(arr, offset_size=CODEBOOK_SIZE):
 
 
 class Pipeline:
-    def __init__(self, model: nn.Module, tokenizer: any, config: any):
+    def __init__(self, model: nn.Module, tokenizer: Any, config: Any): # Change any to Any
         self.model = model
         self.tokenizer = tokenizer
         self.codec_model, _ = Encodec.from_pretrained(config.codec_path)
@@ -422,12 +422,16 @@ class Pipeline:
     def __call__(
         self,
         text: str,
-        voice: str = None,
+        voice: Optional[str] = None, # Change str to Optional[str]
         temperature: float = 0.7,
         speed: float = 1.0,
         use_kv_caching: bool = False,
         **kwargs,
     ):
+        # Add check for None voice
+        if voice is None:
+            raise ValueError("A voice must be specified.")
+
         semantic_tokens, tokens = self.generate_text_semantic(
             text, voice, temperature, use_kv_caching, **kwargs
         )

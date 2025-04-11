@@ -39,8 +39,13 @@ def interpolate(
 
     # Calculate output size from scale factor if needed
     if size is None:
+        # Add assertion to help mypy
+        # Add assertion to help mypy
+        assert scale_factor is not None, "scale_factor cannot be None if size is None"
         size = []
         for i in range(spatial_dims):
+            # Add assertion inside loop to confirm scale_factor is indexable
+            assert isinstance(scale_factor, (list, tuple)), "scale_factor should be a sequence here"
             # Use ceiling instead of floor to match PyTorch behavior
             curr_size = max(1, int(mx.ceil(input.shape[i + 2] * scale_factor[i])))
             size.append(curr_size)

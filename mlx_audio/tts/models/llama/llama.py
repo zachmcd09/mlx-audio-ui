@@ -300,10 +300,10 @@ class Model(nn.Module):
         code_lists = []
 
         for row in processed_rows:
-            row_length = row.shape[0]
+            row_length = row.shape[0] if row is not None else 0
             new_length = (row_length // 7) * 7
-            trimmed_row = row[:new_length]
-            trimmed_row = [t - 128266 for t in trimmed_row]
+            trimmed_row = row[:new_length] if row is not None else []
+            trimmed_row = [t - 128266 for t in trimmed_row.tolist()] if trimmed_row is not None else []
             code_lists.append(trimmed_row)
 
         return code_lists

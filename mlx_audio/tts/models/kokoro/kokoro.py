@@ -79,7 +79,7 @@ class Model(nn.Module):
 
     REPO_ID = "prince-canuma/Kokoro-82M"
 
-    def __init__(self, config: ModelConfig, repo_id: str = None):
+    def __init__(self, config: ModelConfig, repo_id: Optional[str] = None): # Use Optional[str]
         super().__init__()
         self.repo_id = repo_id
         self.config = config
@@ -119,10 +119,10 @@ class Model(nn.Module):
         self,
         phonemes: str,
         ref_s: mx.array,
-        speed: Number = 1,
+        speed: float = 1.0, # Change type hint and default
         return_output: bool = False,  # MARK: BACKWARD COMPAT
         decoder=None,
-    ) -> Union["KokoroModel.Output", mx.array]:
+    ) -> Union["Model.Output", mx.array]: # Use string literal "Model"
         input_ids = list(
             filter(lambda i: i is not None, map(lambda p: self.vocab.get(p), phonemes))
         )
@@ -131,6 +131,8 @@ class Model(nn.Module):
             self.context_length,
         )
         input_ids = mx.array([[0, *input_ids, 0]])
+        # Add assertion for mypy
+        assert isinstance(input_ids, mx.array)
         input_lengths = mx.array([input_ids.shape[-1]])
         text_mask = mx.arange(int(input_lengths.max()))[None, ...]
         text_mask = mx.repeat(text_mask, input_lengths.shape[0], axis=0).astype(
@@ -149,6 +151,8 @@ class Model(nn.Module):
         indices = mx.concatenate(
             [mx.repeat(mx.array(i), int(n)) for i, n in enumerate(pred_dur)]
         )
+        # Explicitly ensure input_ids is treated as mx.array here
+        input_ids = mx.array(input_ids)
         pred_aln_trg = mx.zeros((input_ids.shape[1], indices.shape[0]))
         pred_aln_trg[indices, mx.arange(indices.shape[0])] = 1
         pred_aln_trg = pred_aln_trg[None, :]
@@ -252,7 +256,7 @@ class Model(nn.Module):
     def generate(
         self,
         text: str,
-        voice: str = None,
+        voice: Optional[str] = None, # Use Optional[str]
         speed: float = 1.0,
         lang_code: str = "a",
         split_pattern: str = r"\n+",

@@ -16,7 +16,7 @@ def get_padding(kernel_size: int, dilation: int = 1) -> int:
 def compute_norm(
     x: mx.array,
     p: int,
-    dim: Optional[Union[int, List[int]]] = None,
+    dim: Optional[List[int]] = None, # Simplify type hint
     keepdim: bool = False,
 ) -> mx.array:
     """
@@ -35,17 +35,20 @@ def compute_norm(
         raise ValueError("Only p-norms with p of 1 or 2 are supported")
 
     # Handle dimension input
+    dims_to_use: List[int]
     if dim is None:
-        dim = tuple(range(x.ndim))
-    elif isinstance(dim, int):
-        dim = (dim,)
+        dims_to_use = list(range(x.ndim))
+    # elif isinstance(dim, int): # This case should not happen with the new type hint
+    #     dims_to_use = [dim]
+    else: # dim is already a List[int] or None (handled above)
+        dims_to_use = dim
 
     if p == 1:
         # L1 norm
-        return mx.sum(mx.abs(x), axis=dim, keepdims=keepdim)
+        return mx.sum(mx.abs(x), axis=dims_to_use, keepdims=keepdim)
     else:
         # L2 norm
-        return mx.sqrt(mx.sum(x * x, axis=dim, keepdims=keepdim))
+        return mx.sqrt(mx.sum(x * x, axis=dims_to_use, keepdims=keepdim))
 
 
 def weight_norm(
@@ -185,19 +188,11 @@ class _InstanceNorm(nn.Module):
         self.track_running_stats = track_running_stats
 
         # Initialize parameters
-        if self.affine:
-            self.weight = mx.ones((num_features,))
-            self.bias = mx.zeros((num_features,))
-        else:
-            self.weight = None
-            self.bias = None
+        self.weight: Optional[mx.array] = mx.ones((num_features,)) if affine else None
+        self.bias: Optional[mx.array] = mx.zeros((num_features,)) if affine else None
 
-        if self.track_running_stats:
-            self.running_mean = mx.zeros((num_features,))
-            self.running_var = mx.ones((num_features,))
-        else:
-            self.running_mean = None
-            self.running_var = None
+        self.running_mean: Optional[mx.array] = mx.zeros((num_features,)) if track_running_stats else None
+        self.running_var: Optional[mx.array] = mx.ones((num_features,)) if track_running_stats else None
 
     def _check_input_dim(self, input):
         raise NotImplementedError
@@ -242,6 +237,8 @@ class _InstanceNorm(nn.Module):
                 ) * self.running_var + self.momentum * overall_var
         else:
             # Use running statistics
+            if self.running_mean is None or self.running_var is None:
+                 raise ValueError("Running stats not tracked but expected.")
             mean_shape = [1] * input.ndim
             mean_shape[feature_dim] = self.num_features
             var_shape = mean_shape.copy()
@@ -698,7 +695,7 @@ class SineGen:
             # This is used for pulse-train generation
             # identify the last time step in unvoiced segments
             uv = self._f02uv(f0_values)
-            uv_1 = mx.roll(uv, shifts=-1, axis=1)
+            uv_1 = mx.roll(uv, -1, 1) # Use positional arguments for shift and axis
             uv_1[:, -1, :] = 1
             u_loc = (uv < 1) * (uv_1 > 0)
             # get the instantanouse phase

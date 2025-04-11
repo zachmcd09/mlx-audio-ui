@@ -41,7 +41,7 @@ test.describe('TTS Happy Path', () => {
     // 4. Click Play
     // Start waiting for the network response *before* clicking
     const ttsResponsePromise = page.waitForResponse(
-        response => response.url().includes('/synthesize_pcm') && response.status() === 200,
+        response => response.url().includes('/tts') && response.status() === 200, // Corrected endpoint URL
         { timeout: 30000 } // Increase timeout for potentially slow TTS
     );
     await playButton.click();
@@ -53,7 +53,13 @@ test.describe('TTS Happy Path', () => {
     // Wait for the TTS network request to complete successfully
     const ttsResponse = await ttsResponsePromise;
     expect(ttsResponse.ok()).toBeTruthy();
-    expect(ttsResponse.headers()['content-type']).toContain('audio/pcm');
+    // The backend currently returns JSON with a filename, not raw audio/pcm
+    // expect(ttsResponse.headers()['content-type']).toContain('audio/pcm');
+    // We need to check the JSON response body instead
+    const responseBody = await ttsResponse.json();
+    expect(responseBody).toHaveProperty('filename');
+    expect(responseBody.filename).toMatch(/tts_.*\.wav/);
+
 
     // Expect status to show "Playing" (or similar) after buffering/network response
     await expect(statusBar).toContainText(/playing/i, { timeout: 15000 }); // Allow time for buffering

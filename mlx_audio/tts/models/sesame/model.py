@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Any # Added Optional, Any
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -31,7 +31,8 @@ TOKENIZER_REPO = "unsloth/Llama-3.2-1B"
 
 
 def create_causal_mask(seq_len: int) -> mx.array:
-    return mx.tril(mx.ones((seq_len, seq_len), dtype=mx.bool_))
+    # Add k=0 argument to tril
+    return mx.tril(mx.ones((seq_len, seq_len), dtype=bool), k=0) # Use Python bool
 
 
 def index_causal_mask(mask: mx.array, input_pos: mx.array) -> mx.array:
@@ -149,6 +150,8 @@ class SesameModel(nn.Module):
     def setup_caches(self, max_batch_size: int):
         backbone_args = create_llama_model_args(self.args.backbone_flavor)
 
+        # Assert max_position_embeddings is not None before passing
+        assert backbone_args.max_position_embeddings is not None, "max_position_embeddings must be set"
         self._backbone_causal_mask = create_causal_mask(
             backbone_args.max_position_embeddings
         )
@@ -287,7 +290,7 @@ class Model(nn.Module):
 
         text_tokens = self._text_tokenizer.encode(f"[{speaker}]{text}")
         text_frame = mx.zeros((len(text_tokens), 33)).astype(mx.int32)
-        text_frame_mask = mx.zeros((len(text_tokens), 33)).astype(mx.bool_)
+        text_frame_mask = mx.zeros((len(text_tokens), 33)).astype(mx.bool_) # type: ignore[attr-defined]
         text_frame[:, -1] = mx.array(text_tokens)
         text_frame_mask[:, -1] = True
 
@@ -310,7 +313,7 @@ class Model(nn.Module):
         audio_tokens = mx.concat([audio_tokens, eos_frame], axis=1)
 
         audio_frame = mx.zeros((audio_tokens.shape[1], 33)).astype(mx.int32)
-        audio_frame_mask = mx.zeros((audio_tokens.shape[1], 33)).astype(mx.bool_)
+        audio_frame_mask = mx.zeros((audio_tokens.shape[1], 33)).astype(mx.bool_) # type: ignore[attr-defined]
         audio_frame[:, :-1] = audio_tokens.swapaxes(0, 1)
         audio_frame_mask[:, :-1] = True
 
@@ -353,9 +356,9 @@ class Model(nn.Module):
         speaker: int = 0,
         context: List[Segment] = [],
         max_audio_length_ms: float = 90_000,
-        sampler: Callable[..., mx.array] = None,
-        ref_audio: mx.array = None,
-        ref_text: str = None,
+        sampler: Optional[Callable[..., mx.array]] = None, # Use Optional
+        ref_audio: Optional[mx.array] = None, # Use Optional
+        ref_text: Optional[str] = None, # Use Optional
         **kwargs,
     ):
         self.model.reset_caches()
@@ -367,7 +370,9 @@ class Model(nn.Module):
 
         start_time = time.time()
 
-        sampler = sampler or make_sampler(temp=0.9, top_k=50)
+        # Check if sampler is not None before using it
+        if sampler is None:
+            sampler = make_sampler(temp=0.9, top_k=50) # Use default if None
         max_audio_frames = int(max_audio_length_ms / 80)
 
         tokens, tokens_mask = [], []
@@ -383,9 +388,9 @@ class Model(nn.Module):
         tokens_mask.append(gen_segment_tokens_mask)
 
         prompt_tokens = mx.concat(tokens, axis=0).astype(mx.int32)
-        prompt_tokens_mask = mx.concat(tokens_mask, axis=0).astype(mx.bool_)
+        prompt_tokens_mask = mx.concat(tokens_mask, axis=0).astype(mx.bool_) # type: ignore[attr-defined]
 
-        samples = []
+        samples = [] # Initialize samples list
         curr_tokens = mx.expand_dims(prompt_tokens, axis=0)
         curr_tokens_mask = mx.expand_dims(prompt_tokens_mask, axis=0)
         curr_pos = mx.expand_dims(mx.arange(0, prompt_tokens.shape[0]), axis=0).astype(
@@ -399,22 +404,22 @@ class Model(nn.Module):
             )
 
         for _ in tqdm(range(max_audio_frames)):
-            sample = self.model.generate_frame(
+            sample_val = self.model.generate_frame( # Rename inner variable
                 curr_tokens, curr_tokens_mask, curr_pos, sampler
             )
-            if mx.all(sample == 0):
+            if mx.all(sample_val == 0): # type: ignore[arg-type]
                 break  # eos
 
-            samples.append(sample)
+            samples.append(sample_val) # Append to list
 
             curr_tokens = mx.expand_dims(
-                mx.concat([sample, mx.zeros((1, 1)).astype(mx.int32)], axis=1), axis=1
+                mx.concat([sample_val, mx.zeros((1, 1)).astype(mx.int32)], axis=1), axis=1
             )
             curr_tokens_mask = mx.expand_dims(
                 mx.concat(
                     [
-                        mx.ones_like(sample).astype(mx.bool_),
-                        mx.zeros((1, 1)).astype(mx.bool_),
+                        mx.ones_like(sample_val).astype(mx.bool_), # type: ignore[attr-defined]
+                        mx.zeros((1, 1)).astype(mx.bool_), # type: ignore[attr-defined]
                     ],
                     axis=1,
                 ),
@@ -442,15 +447,15 @@ class Model(nn.Module):
 
         segment_time = time.time() - start_time
 
-        samples = audio.shape[0] if audio is not None else 0
-        assert samples > 0, "No audio generated"
+        num_samples = audio.shape[0] if audio is not None else 0 # Use num_samples for clarity
+        assert num_samples > 0, "No audio generated"
 
         # Calculate token count
         token_count = curr_tokens.shape[2]
 
         # Calculate audio duration in seconds
         sample_rate = 24000  # Assuming 24kHz sample rate, adjust if different
-        audio_duration_seconds = samples / sample_rate
+        audio_duration_seconds = num_samples / sample_rate # Use num_samples
 
         # Calculate real-time factor (RTF)
         rtf = segment_time / audio_duration_seconds if audio_duration_seconds > 0 else 0
@@ -465,7 +470,7 @@ class Model(nn.Module):
         return [
             GenerationResult(
                 audio=audio,
-                samples=samples,
+                samples=num_samples, # Use num_samples
                 segment_idx=0,
                 token_count=token_count,
                 audio_duration=duration_str,
@@ -477,9 +482,9 @@ class Model(nn.Module):
                     ),
                 },
                 audio_samples={
-                    "samples": samples,
+                    "samples": num_samples, # Use num_samples
                     "samples-per-sec": (
-                        round(samples / segment_time, 2) if segment_time > 0 else 0
+                        round(num_samples / segment_time, 2) if segment_time > 0 else 0 # Use num_samples
                     ),
                 },
                 processing_time_seconds=segment_time,

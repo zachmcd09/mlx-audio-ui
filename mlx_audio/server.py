@@ -2,6 +2,7 @@ import argparse
 import importlib.util
 import logging
 import os
+from pathlib import Path  # <-- Add import
 import sys
 import tempfile
 import uuid
@@ -66,6 +67,13 @@ logger.debug(f"Using output folder: {OUTPUT_FOLDER}")
 def speech_to_speech_handler(
     audio: tuple[int, NDArray[np.int16]], voice: str, speed: float, model: str
 ):
+    # Add check for loaded model
+    if tts_model is None:
+        logger.error("TTS model not loaded when speech_to_speech_handler was called.")
+        # Depending on desired behavior, you might raise an exception
+        # or return an empty generator. Returning stops processing here.
+        return
+
     text = stt_model.stt(audio)
     for segment in tts_model.generate(
         text=text,
@@ -148,7 +156,9 @@ def tts_endpoint(
     if tts_model is None or current_model_repo_id != model:
         try:
             logger.debug(f"Loading TTS model from {model}")
-            tts_model = load_model(model)
+            # Convert model string to Path object before passing
+            model_path = Path(model)
+            tts_model = load_model(model_path)
             logger.debug("TTS model loaded successfully")
         except Exception as e:
             logger.error(f"Error loading TTS model: {str(e)}")
@@ -344,7 +354,7 @@ def play_audio(filename: str = Form(...)):
     Play audio directly from the server using the AudioPlayer.
     Expects a filename that exists in the OUTPUT_FOLDER.
     """
-    global audio_player
+    # global audio_player # Removed unnecessary global
 
     if audio_player is None:
         return JSONResponse({"error": "Audio player not initialized"}, status_code=500)
@@ -376,7 +386,7 @@ def stop_audio():
     """
     Stop any currently playing audio.
     """
-    global audio_player
+    # global audio_player # Removed unnecessary global
 
     if audio_player is None:
         return JSONResponse({"error": "Audio player not initialized"}, status_code=500)
@@ -396,7 +406,7 @@ def open_output_folder():
     Open the output folder in the system file explorer (Finder on macOS).
     This only works when running on localhost for security reasons.
     """
-    global OUTPUT_FOLDER
+    # global OUTPUT_FOLDER # Removed unnecessary global
 
     # Check if the request is coming from localhost
     # Note: In a production environment, you would want to check the request IP

@@ -177,55 +177,56 @@ class Mimi(nn.Module):
         strict: bool = True,
     ) -> nn.Module:
         weights = []
-        for k, v in mx.load(file).items():
-            v: mx.array = v
-            k: str = ".".join([s.removeprefix("_") for s in k.split(".")])
-            if k.startswith("encoder.model."):
-                k = k.replace("encoder.model.", "encoder.")
-            if k.startswith("decoder.model."):
-                k = k.replace("decoder.model.", "decoder.")
-            if k.endswith(".in_proj_weight"):
-                k = k.replace(".in_proj_weight", ".in_proj.weight")
-            if k.endswith(".linear1.weight"):
-                k = k.replace(".linear1.weight", ".gating.linear1.weight")
-            if k.endswith(".linear2.weight"):
-                k = k.replace(".linear2.weight", ".gating.linear2.weight")
+        # Rename loop variables to avoid potential conflicts
+        for key, value in mx.load(file).items():
+            value: mx.array = value
+            key: str = ".".join([s.removeprefix("_") for s in key.split(".")])
+            if key.startswith("encoder.model."):
+                key = key.replace("encoder.model.", "encoder.")
+            if key.startswith("decoder.model."):
+                key = key.replace("decoder.model.", "decoder.")
+            if key.endswith(".in_proj_weight"):
+                key = key.replace(".in_proj_weight", ".in_proj.weight")
+            if key.endswith(".linear1.weight"):
+                key = key.replace(".linear1.weight", ".gating.linear1.weight")
+            if key.endswith(".linear2.weight"):
+                key = key.replace(".linear2.weight", ".gating.linear2.weight")
             # Awfully hardcoded matching between the pytorch layers and their mlx equivalent :(
             for layerIdx, decoderIdx in enumerate([2, 5, 8, 11]):
-                k = k.replace(
+                key = key.replace(
                     f"decoder.{decoderIdx}.", f"decoder.layers.{layerIdx}.upsample."
                 )
-                k = k.replace(
+                key = key.replace(
                     f"decoder.{decoderIdx + 1}.",
                     f"decoder.layers.{layerIdx}.residuals.0.",
                 )
             for layerIdx, encoderIdx in enumerate([1, 4, 7, 10]):
-                k = k.replace(
+                key = key.replace(
                     f"encoder.{encoderIdx}.", f"encoder.layers.{layerIdx}.residuals.0."
                 )
-                k = k.replace(
+                key = key.replace(
                     f"encoder.{encoderIdx + 2}.",
                     f"encoder.layers.{layerIdx}.downsample.",
                 )
 
-            k = k.replace("decoder.0.", "decoder.init_conv1d.")
-            k = k.replace("decoder.14.", "decoder.final_conv1d.")
-            k = k.replace("encoder.0.", "encoder.init_conv1d.")
-            k = k.replace("encoder.14.", "encoder.final_conv1d.")
-            k = k.replace(".block.1.", ".block.0.")
-            k = k.replace(".block.3.", ".block.1.")
+            key = key.replace("decoder.0.", "decoder.init_conv1d.")
+            key = key.replace("decoder.14.", "decoder.final_conv1d.")
+            key = key.replace("encoder.0.", "encoder.init_conv1d.")
+            key = key.replace("encoder.14.", "encoder.final_conv1d.")
+            key = key.replace(".block.1.", ".block.0.")
+            key = key.replace(".block.3.", ".block.1.")
 
             # PyTorch layout for conv weights is outC, inC, kSize, for MLX it's outC, kSize, inC
             if (
-                k.endswith(".conv.weight")
-                or k.endswith(".output_proj.weight")
-                or k.endswith(".input_proj.weight")
+                key.endswith(".conv.weight")
+                or key.endswith(".output_proj.weight")
+                or key.endswith(".input_proj.weight")
             ):
-                v = v.swapaxes(-1, -2)
+                value = value.swapaxes(-1, -2)
             # PyTorch layout for conv-transposed weights is inC, outC, kSize, for MLX it's outC, kSize, inC
-            if k.endswith(".convtr.weight"):
-                v = v.transpose(1, 2, 0)
-            weights.append((k, v))
+            if key.endswith(".convtr.weight"):
+                value = value.transpose(1, 2, 0)
+            weights.append((key, value))
         return self.load_weights(weights, strict=strict)
 
     @classmethod

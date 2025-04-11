@@ -1,7 +1,7 @@
 import json
 import math
 from pathlib import Path
-from typing import List, Literal, Union
+from typing import Any, List, Literal, Optional, Union # Import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -61,18 +61,20 @@ class Encoder(nn.Module):
         d_latent: int = 64,
     ):
         super().__init__()
-        self.block = [WNConv1d(1, d_model, kernel_size=7, padding=3)]
+        blocks: List[Union[WNConv1d, EncoderBlock, Snake1d]] = [
+            WNConv1d(1, d_model, kernel_size=7, padding=3)
+        ]
 
         for stride in strides:
             d_model *= 2
-            self.block += [EncoderBlock(d_model, stride=stride)]
+            blocks.append(EncoderBlock(d_model, stride=stride))
 
-        self.block += [
+        blocks.extend([
             Snake1d(d_model),
             WNConv1d(d_model, d_latent, kernel_size=3, padding=1),
-        ]
+        ])
 
-        self.block = nn.Sequential(*self.block)
+        self.block = nn.Sequential(*blocks)
         self.enc_dim = d_model
 
     def __call__(self, x):
@@ -133,13 +135,13 @@ class DAC(nn.Module, CodecMixin):
         self,
         encoder_dim: int = 64,
         encoder_rates: List[int] = [2, 4, 5, 8],
-        latent_dim: int = None,
+        latent_dim: Optional[int] = None, # Use Optional[int]
         decoder_dim: int = 1536,
         decoder_rates: List[int] = [8, 5, 4, 2],
         n_codebooks: int = 32,
         codebook_size: int = 1024,
         codebook_dim: Union[int, list] = 8,
-        sample_rate: int = 44100,
+        sample_rate: int = 44100, # Keep as int, default is non-None
     ):
         super().__init__()
 
@@ -188,12 +190,14 @@ class DAC(nn.Module, CodecMixin):
 
         return audio_data
 
+    # Match signature with CodecMixin in base.py
     def encode(
         self,
-        audio_data: mx.array,
-        n_quantizers: int = None,
-    ):
-        z = self.encoder(audio_data.moveaxis(1, 2))
+        x: Any,
+        n_quantizers: Optional[int] = None,
+    ) -> tuple[Any, mx.array, Any, Any, Any]: # Ensure return type matches base
+        # Assuming x is the audio_data here based on usage
+        z = self.encoder(x.moveaxis(1, 2))
         z, codes, latents, commitment_loss, codebook_loss = self.quantizer(
             z, n_quantizers
         )
@@ -217,8 +221,8 @@ class DAC(nn.Module, CodecMixin):
     def __call__(
         self,
         audio_data: mx.array,
-        sample_rate: int = None,
-        n_quantizers: int = None,
+        sample_rate: Optional[int] = None, # Use Optional[int]
+        n_quantizers: Optional[int] = None, # Use Optional[int]
         use_rvq: bool = True,
         return_loss: bool = False,
     ):

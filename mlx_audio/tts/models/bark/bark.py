@@ -149,7 +149,7 @@ class CausalSelfAttention(nn.Module):
         self.n_embd = args.n_embd
         self.dropout = args.dropout
         self.bias = (
-            mx.tril(mx.ones([args.block_size, args.block_size]))
+            mx.tril(mx.ones([args.block_size, args.block_size]), k=0)
             .reshape(1, 1, args.block_size, args.block_size)
             .astype(mx.float32)
         )
@@ -283,10 +283,11 @@ class GPT(nn.Module):
         self,
         x: mx.array,
         merge_context: bool = False,
-        past_kv: mx.array = None,
-        position_ids: mx.array = None,
+        past_kv: Optional[Tuple[Tuple[mx.array, mx.array], ...]] = None,
+        position_ids: Optional[mx.array] = None,
+        semantic_history: Optional[mx.array] = None, # Add semantic_history argument
         use_cache: bool = False,
-    ) -> mx.array:
+    ) -> Tuple[mx.array, Optional[Tuple[Tuple[mx.array, mx.array], ...]]]:
         b, t = x.shape
 
         if past_kv is not None:
@@ -296,6 +297,8 @@ class GPT(nn.Module):
             if merge_context:
                 assert x.shape[1] >= 256 + 256 + 1
                 t = x.shape[1] - 256
+                # Use semantic_history argument passed to the method
+                semantic_history_to_use = semantic_history if semantic_history is not None else mx.array([SEMANTIC_PAD_TOKEN] * 256, dtype=mx.int32)
                 tok_emb = mx.concatenate(
                     [
                         self.input_embeds_layer(x[:, :256])
@@ -422,6 +425,10 @@ class Model(nn.Module):
         self.semantic = GPT(semantic_config)
         self.fine_acoustics = FineGPT(fine_config)
         self.coarse_acoustics = GPT(coarse_config)
+        # Initialize history attributes with Optional type hints
+        self.semantic_history: Optional[mx.array] = None
+        self.coarse_history: Optional[mx.array] = None
+        self.fine_history: Optional[mx.array] = None
 
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
 
@@ -450,7 +457,7 @@ class Model(nn.Module):
 
         return sanitized_weights
 
-    def generate(self, text: str, voice: str = None, **kwargs):
+    def generate(self, text: str, voice: Optional[str] = None, **kwargs): # Ensure voice is Optional[str]
         pipeline = Pipeline(
             model=self,
             tokenizer=self.tokenizer,

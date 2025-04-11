@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
+from typing import Any, Callable, Optional, Union  # <-- Import Optional, Any, Callable
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -55,6 +55,18 @@ class DACFile:
 
 
 class CodecMixin:
+    # --- Add expected attribute declarations for mypy ---
+    sample_rate: int
+    delay: int
+    hop_length: int
+    quantizer: Any  # Assuming quantizer has a 'from_codes' method
+
+    # --- Add expected method declarations for mypy ---
+    def preprocess(self, x: mx.array, sample_rate: int) -> Any: raise NotImplementedError
+    def encode(self, x: Any, n_quantizers: Optional[int]) -> tuple[Any, mx.array, Any, Any, Any]: raise NotImplementedError
+    def decode(self, z: Any) -> mx.array: raise NotImplementedError
+    # --- End of added declarations ---
+
     @property
     def padding(self):
         if not hasattr(self, "_padding"):
@@ -127,7 +139,7 @@ class CodecMixin:
         audio_path: Union[str, Path],
         win_duration: float = 1.0,
         normalize_db: float = -16,
-        n_quantizers: int = None,
+        n_quantizers: Optional[int] = None,  # <-- Use Optional[int]
     ) -> DACFile:
         audio_signal, original_sr = sf.read(audio_path)
         signal_duration = audio_signal.shape[-1] / original_sr
@@ -164,31 +176,37 @@ class CodecMixin:
             n_samples = int(math.ceil(n_samples / self.hop_length) * self.hop_length)
             hop = self.get_output_length(n_samples)
 
-        codes = []
+        code_segments = [] # Rename list to avoid redefinition
         for i in range(0, nt, hop):
             x = audio_data[..., i : i + n_samples]
             x = mx.pad(x, [(0, 0), (0, 0), (0, max(0, n_samples - x.shape[-1]))])
 
             x = self.preprocess(x, self.sample_rate)
             _, c, _, _, _ = self.encode(x, n_quantizers)
-            codes.append(c)
+            code_segments.append(c) # Append to renamed list
+            # Note: chunk_length seems constant, maybe define outside loop?
             chunk_length = c.shape[-1]
 
-        codes = mx.concatenate(codes, axis=-1)
+        # Concatenate segments
+        concatenated_codes: mx.array = mx.concatenate(code_segments, axis=-1)
 
+        # Apply slicing directly in constructor if needed
         dac_file = DACFile(
-            codes=codes,
+            codes=(
+                concatenated_codes[:, :n_quantizers, :]
+                if n_quantizers is not None
+                else concatenated_codes
+            ),
             chunk_length=chunk_length,
             original_length=signal_duration,
-            input_db=input_db,
+            input_db=float(input_db.item()),
             channels=nac,
             sample_rate=original_sr,
             padding=self.padding,
             dac_version=SUPPORTED_VERSIONS[-1],
         )
 
-        if n_quantizers is not None:
-            codes = codes[:, :n_quantizers, :]
+        # --- Slicing moved above ---
 
         self.padding = original_padding
         return dac_file
@@ -196,6 +214,10 @@ class CodecMixin:
     def decompress(self, obj: Union[str, Path, DACFile]) -> mx.array:
         if isinstance(obj, (str, Path)):
             obj = DACFile.load(obj)
+
+        # --- Add assertion to help mypy narrow the type ---
+        assert isinstance(obj, DACFile), "Object must be loaded as DACFile by this point"
+        # --- End assertion ---
 
         if self.sample_rate != obj.sample_rate:
             raise ValueError(
