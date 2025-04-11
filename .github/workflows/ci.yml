@@ -1,4 +1,3 @@
-# .github/workflows/ci.yml
 name: MLX Audio UI CI
 
 on:
@@ -20,20 +19,21 @@ jobs:
         with:
           python-version: '3.10' # Match project requirement
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20' # Match project requirement or LTS
-
-      - name: Install Python Linters (if needed, or use pre-commit)
+      - name: Install Python dependencies
         run: |
-          pip install flake8 mypy # Add others as defined
-          # Consider running pre-commit install and pre-commit run --all-files
+          pip install flake8 mypy types-PyYAML types-requests
+          pip install -e .
+          pip install -r requirements-dev.txt
 
       - name: Run Python Linters/Type Check
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           mypy . --ignore-missing-imports # Adjust mypy config as needed
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Match project requirement or LTS
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
