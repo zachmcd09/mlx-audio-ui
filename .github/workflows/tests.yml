@@ -36,6 +36,19 @@ jobs:
           python -m pip install pytest
           python -m pip install -e .
 
+      - name: Compile Metal Kernel
+        run: |
+          set -e
+          cd mlx_audio/codec/models/encodec
+          echo "Compiling Metal kernel..."
+          xcrun metal -c -std=macos-metal2.3 LSTM.metal -o LSTM.air
+          echo "Creating Metal library..."
+          xcrun metallib LSTM.air -o LSTM.metallib
+          echo "Cleaning up intermediate file..."
+          rm LSTM.air 
+          echo "Metal compilation successful."
+          cd ../../../..
+
       - name: Run Python tests (TTS)
         run: |
           cd mlx_audio/tts/
