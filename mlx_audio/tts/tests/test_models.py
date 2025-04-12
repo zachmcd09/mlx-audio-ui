@@ -3,7 +3,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import mlx.core as mx
-import mlx.nn as nn
+import mlx.nn as nn # Add missing import
+import misaki as ms  # type: ignore
 import numpy as np
 from misaki import en
 

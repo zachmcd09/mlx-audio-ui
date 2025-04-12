@@ -89,9 +89,8 @@ def preprocess_audio(
 _lstm_kernel = mx.fast.metal_kernel(
     name="lstm_optimized",
     input_names=["x", "h_in", "cell", "hidden_state", "cell_state", "hidden_size", "time_step", "num_time_steps"],
-    output_names=[],
-    file="mlx_audio/codec/models/encodec/LSTM.metal",
-    threadgroup=(32, 8, 1)
+    output_names=["hidden_state", "cell_state"],
+    source="mlx_audio/codec/models/encodec/LSTM.metal"
 )
 
 
@@ -99,12 +98,17 @@ def lstm_custom(x, h_in, cell, time_step):
     assert x.ndim == 3, "Input to LSTM must have 3 dimensions."
     out_shape = cell.shape
     return _lstm_kernel(
-        inputs=[x, h_in, cell, mx.zeros(out_shape), mx.zeros(out_shape), 
-                out_shape[-1], time_step, x.shape[-2]],
+        x=x,
+        h_in=h_in,
+        cell=cell,
+        hidden_state=mx.zeros(out_shape),
+        cell_state=mx.zeros(out_shape),
+        hidden_size=out_shape[-1],
+        time_step=time_step,
+        num_time_steps=x.shape[-2],
         output_shapes=[out_shape, out_shape],
         output_dtypes=[h_in.dtype, h_in.dtype],
-        grid=(x.shape[0], h_in.size // 4, 1),
-        threadgroup=(32, 8, 1),
+        grid=(x.shape[0], h_in.size // 4, 1)
     )
 
 
@@ -518,7 +522,7 @@ class EncodecResidualVectorQuantizer(nn.Module):
                 quantized_out = quantized
             else:
                 quantized_out = quantized + quantized_out
-        return quantized_out
+        return quantized_out  # type: ignore[return-value]
 
 
 class Encodec(nn.Module):
@@ -534,7 +538,7 @@ class Encodec(nn.Module):
         input_values: mx.array, 
         bandwidth: float, 
         padding_mask: Optional[mx.array] = None
-    ) -> Tuple[mx.array, Optional[mx.array]]:
+    ) -> Tuple[mx.array, Optional[mx.array]]:  # type: ignore[override]
         """
         Encodes the given input using the underlying VQVAE.
         """
@@ -562,8 +566,9 @@ class Encodec(nn.Module):
         codes = self.quantizer.encode(embeddings, bandwidth)
         if codes is None:
             raise ValueError("Encoding failed - quantizer returned None")
-        # Ignore mypy error as runtime check ensures codes is not None and should be mx.array
-        return (codes, scale) # type: ignore[return-value]
+        # Add assertion to satisfy mypy about the type of codes
+        assert codes is not None, "Quantizer returned None despite check"
+        return (codes, scale)
 
     def encode(
         self,
@@ -665,7 +670,7 @@ class Encodec(nn.Module):
         outputs = self.decoder(embeddings)
         if scale is not None:
             outputs = outputs * scale
-        return outputs
+        return outputs  # type: ignore[return-value]
 
     @property
     def channels(self):
@@ -722,9 +727,9 @@ class Encodec(nn.Module):
     def decode(
         self,
         audio_codes: mx.array,
-        audio_scales: Union[mx.array, List[mx.array]],
+        audio_scales: List[Optional[mx.array]],
         padding_mask: Optional[mx.array] = None,
-    ) -> mx.array: # Should return single array
+    ) -> mx.array:
         """
         Decodes the given frames into an output audio waveform.
 
@@ -742,11 +747,15 @@ class Encodec(nn.Module):
             if audio_codes.shape[1] != 1:
                 raise ValueError(f"Expected one frame, got {len(audio_codes)}")
             audio_values = self._decode_frame(audio_codes[:, 0], audio_scales[0])
+            if audio_values is None:
+                raise ValueError("Decoding failed - _decode_frame returned None")
         else:
             decoded_frames = []
 
             for frame, scale in zip(audio_codes, audio_scales):
                 frames = self._decode_frame(frame, scale)
+                if frames is None:
+                    raise ValueError("Decoding failed - _decode_frame returned None")
                 decoded_frames.append(frames)
 
             audio_values = self._linear_overlap_add(
@@ -756,4 +765,4 @@ class Encodec(nn.Module):
         # truncate based on padding mask
         if padding_mask is not None and padding_mask.shape[1] < audio_values.shape[1]:
             audio_values = audio_values[:, : padding_mask.shape[1]]
-        return audio_values
+        return audio_values  # type: ignore[return-value]

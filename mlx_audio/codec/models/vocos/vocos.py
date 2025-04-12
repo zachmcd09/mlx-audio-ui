@@ -271,11 +271,16 @@ class Vocos(nn.Module):
         # Use SimpleNamespace for type hint
         hparams = SimpleNamespace(**config)
 
+        feature_extractor: FeatureExtractor
         if "MelSpectrogramFeatures" in hparams.feature_extractor["class_path"]:
             feature_extractor_init_args = hparams.feature_extractor["init_args"]
             feature_extractor = MelSpectrogramFeatures(**feature_extractor_init_args)
         elif "EncodecFeatures" in hparams.feature_extractor["class_path"]:
             feature_extractor = EncodecFeatures(**hparams.feature_extractor["init_args"])
+        else:
+            raise ValueError(
+                f"Unknown feature extractor class: {hparams.feature_extractor['class_path']}"
+            )
         backbone = VocosBackbone(**hparams.backbone["init_args"])
         head = ISTFTHead(**hparams.head["init_args"])
         model = cls(feature_extractor=feature_extractor, backbone=backbone, head=head)
@@ -297,8 +302,8 @@ class Vocos(nn.Module):
             )
 
         model_path = path / "model.safetensors"
-        with open(model_path, "rb") as f:
-            weights = mx.load(f)
+        # Pass the path string directly to mx.load
+        weights = mx.load(str(model_path))
 
         config_path = path / "config.yaml"
         with open(config_path, "r") as f:

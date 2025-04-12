@@ -9,10 +9,10 @@ from typing import Dict, Optional, Tuple, Union
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
-import tqdm
+import tqdm  # type: ignore
 from mlx.utils import tree_map, tree_unflatten
 from mlx_lm.models.base import create_causal_mask
-from scipy.io.wavfile import write as write_wav
+from scipy.io.wavfile import write as write_wav  # type: ignore
 from transformers import BertTokenizer
 
 from ..base import BaseModelArgs, GenerationResult
@@ -47,7 +47,7 @@ def filter_dataclass_fields(data_dict, dataclass_type):
 
 @dataclass
 class SemanticConfig(BaseModelArgs):
-    bad_words_ids: list[list[int]] = None
+    bad_words_ids: list[list[int]] = []
     block_size: int = 1024
     input_vocab_size: int = 129600
     output_vocab_size: int = 129600
@@ -57,7 +57,7 @@ class SemanticConfig(BaseModelArgs):
     bias: bool = False
     model_type: str = "semantic"
     dropout: float = 0.0
-    architectures: list[str] = None
+    architectures: list[str] = []
 
 
 @dataclass
@@ -313,9 +313,16 @@ class GPT(nn.Module):
         # past length
         if past_kv is None:
             past_length = 0
-            past_kv = tuple([None] * len(self.layers))
+            # Keep past_kv as None if it starts as None
         else:
-            past_length = past_kv[0][0].shape[-2]
+            # Ensure past_kv[0] and past_kv[0][0] are not None before accessing shape
+            if past_kv is None:
+                past_length = 0
+            else:
+                # Safely get past_length from first key tensor if it exists
+                first_kv = past_kv[0] if past_kv else None
+                first_key = first_kv[0] if first_kv else None
+                past_length = first_key.shape[-2] if first_key is not None else 0
 
         if position_ids is None:
             position_ids = mx.arange(past_length, t + past_length)
@@ -326,13 +333,20 @@ class GPT(nn.Module):
         )  # position embeddings of shape (1, t, n_embd)
         x = self.drop(tok_emb + pos_emb)
 
-        new_kv = () if use_cache else None
+        # More precise type hint for kv_cache
+        new_kv: Optional[Tuple[Tuple[mx.array, mx.array], ...]] = () if use_cache else None
 
-        for i, (block, past_layer_kv) in enumerate(zip(self.layers, past_kv)):
+        for i, (block, past_layer_kv) in enumerate(zip(self.layers, past_kv or [None]*len(self.layers))): # Handle None past_kv in zip
+            # Pass the potentially None past_layer_kv to the block
             x, kv = block(x, past_kv=past_layer_kv, use_cache=use_cache)
 
-            if use_cache:
-                new_kv = new_kv + (kv,)
+            # Ensure kv is not None before attempting addition
+            if use_cache and kv is not None:
+                current_kv_tuple = (kv,)
+                if new_kv is None: # Should only happen if use_cache was initially False, but check anyway
+                     new_kv = current_kv_tuple
+                else:
+                     new_kv = new_kv + current_kv_tuple # Safely add tuples
 
         x = self.layernorm_final(x)
 
@@ -388,7 +402,7 @@ class FineGPT(nn.Module):
             x = block(x)
         x = self.layernorm_final(x)
 
-        logits = self.lm_heads[pred_idx - self.args.n_codes_given](x)
+        logits = self.lm_heads[int(pred_idx.item()) - self.args.n_codes_given](x)
         return logits
 
 
@@ -425,10 +439,10 @@ class Model(nn.Module):
         self.semantic = GPT(semantic_config)
         self.fine_acoustics = FineGPT(fine_config)
         self.coarse_acoustics = GPT(coarse_config)
-        # Initialize history attributes with Optional type hints
-        self.semantic_history: Optional[mx.array] = None
-        self.coarse_history: Optional[mx.array] = None
-        self.fine_history: Optional[mx.array] = None
+        # Initialize history attributes with proper types and empty defaults
+        self.semantic_history: list[list[int]] = [[]]
+        self.coarse_history: list[list[int]] = [[]]
+        self.fine_history: list[str] = [""]
 
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
 
@@ -467,11 +481,18 @@ class Model(nn.Module):
         # Track overall generation time
         start_time = time.time()
 
-        for segment_idx, (audio, tokens) in enumerate(
-            pipeline(text, voice=voice, use_kv_caching=True, **kwargs)
+        # Iterate through results explicitly
+        # Ensure voice is not None before pipeline call (as pipeline expects str)
+        assert voice is not None, "Voice cannot be None for pipeline generation"
+        for segment_idx, result in enumerate(
+            pipeline(text, voice=str(voice), use_kv_caching=True, **kwargs) # type: ignore[arg-type] # Pass voice as str
         ):
             # Track per-segment generation time
             segment_time = time.time() - start_time
+
+            # Access attributes directly from the Result object
+            audio = result.audio
+            tokens = result.tokens
 
             samples = audio.shape[0] if audio is not None else 0
             assert samples > 0, "No audio generated"
@@ -481,7 +502,8 @@ class Model(nn.Module):
 
             # Calculate audio duration in seconds
             sample_rate = 24000  # Assuming 24kHz sample rate, adjust if different
-            audio_duration_seconds = samples / sample_rate * audio.shape[1]
+            # Simplify calculation, remove float casts
+            audio_duration_seconds = int(samples) / sample_rate * int(audio.shape[1])
 
             # Calculate milliseconds per sample
             ms_per_sample = (
@@ -502,9 +524,10 @@ class Model(nn.Module):
             duration_hours = int(audio_duration_seconds // 3600)
             duration_str = f"{duration_hours:02d}:{duration_mins:02d}:{duration_secs:02d}.{duration_ms:03d}"
 
+            # Pass mx.array directly to GenerationResult, cast slice index
             yield GenerationResult(
-                audio=audio[0],
-                samples=samples,
+                audio=audio[0][:, :int(samples)] if audio is not None else None, # type: ignore
+                samples=int(samples),
                 segment_idx=segment_idx,
                 token_count=token_count,
                 audio_duration=duration_str,

@@ -10,8 +10,8 @@ from mlx_lm.models.cache import make_prompt_cache
 from mlx_lm.models.llama import LlamaModel
 from mlx_lm.models.llama import ModelArgs as LlamaModelArgs
 from mlx_lm.sample_utils import make_sampler
-from tokenizers.processors import TemplateProcessing
-from tqdm import tqdm
+from tokenizers.processors import TemplateProcessing  # type: ignore
+from tqdm import tqdm  # type: ignore
 from transformers import AutoTokenizer
 
 from mlx_audio.codec import Mimi

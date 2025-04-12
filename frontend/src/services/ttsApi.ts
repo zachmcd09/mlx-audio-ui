@@ -1,5 +1,5 @@
 // TODO: Make the API base URL configurable via environment variables
-const API_BASE_URL = 'http://127.0.0.1:5001'; // Use IP address instead of localhost
+const API_BASE_URL = 'http://127.0.0.1:5000'; // Use IP address instead of localhost
 
 /**
  * Fetches the TTS audio stream from the backend.
@@ -27,8 +27,8 @@ export async function fetchTTSAudioStream(
       body: JSON.stringify({
         text: text,
         // Include voice and speed if the backend expects them
-        // voice: voice,
-        // speed: speed, // Speed might be handled client-side via playbackRate
+        voice: voice,
+        speed: speed, // Speed might be handled client-side via playbackRate
       }),
     });
 

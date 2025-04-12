@@ -5,7 +5,7 @@ import time
 import threading
 from queue import Queue, Empty
 from flask import Flask, request, Response, jsonify, stream_with_context
-from flask_cors import CORS # Import CORS
+from flask_cors import CORS  # type: ignore # Import CORS
 import numpy as np
 import mlx.core as mx
 
@@ -63,10 +63,19 @@ def _generate_tts_for_chunk_thread(pipeline, text_chunk, voice, speed, result_qu
         cleaned_chunk = text_chunk.strip()
 
         if not cleaned_chunk:
+             # --- DEBUG THREAD ---
+             print(f"  [Thread] Chunk '{cleaned_chunk[:20]}...' is empty, putting None in queue.")
+             # --- END DEBUG ---
              result_queue.put(None)
              return
 
+        # --- DEBUG THREAD ---
+        print(f"  [Thread] Starting pipeline call for chunk '{cleaned_chunk[:20]}...'")
+        # --- END DEBUG ---
         for _, _, audio_segment in pipeline(cleaned_chunk, voice=voice, speed=speed):
+             # --- DEBUG THREAD ---
+             # print(f"  [Thread] Pipeline yielded segment type: {type(audio_segment)}") # Potentially too verbose
+             # --- END DEBUG ---
              if audio_segment is not None and audio_segment.size > 0:
                 if audio_segment.ndim > 1:
                      audio_segment = audio_segment.flatten()
@@ -80,13 +89,56 @@ def _generate_tts_for_chunk_thread(pipeline, text_chunk, voice, speed, result_qu
             int16_array = np.clip(np_array * 32767, -32768, 32767).astype(np.int16)
             audio_data_bytes = int16_array.tobytes()
             # print(f"  [Thread] Generated {len(audio_data_bytes)} bytes.") # Debug
-
+        # --- DEBUG THREAD ---
+        print(f"  [Thread] Finished processing chunk '{cleaned_chunk[:20]}...'. Putting result in queue (Type: {type(audio_data_bytes)}, Size: {len(audio_data_bytes) if audio_data_bytes else 'None'}).")
+        # --- END DEBUG ---
         result_queue.put(audio_data_bytes)
 
     except Exception as e:
         print(f"\nError in TTS generation thread for chunk: \"{text_chunk[:50]}...\"", file=sys.stderr)
         print(f"Details: {e}", file=sys.stderr)
         result_queue.put(None) # Signal error
+
+# --- New Function for Full Audio Generation ---
+def generate_full_tts_audio(text_to_speak, voice, speed):
+    """Generates the full TTS audio and returns raw PCM bytes."""
+    if tts_pipeline is None:
+        print("Error: TTS pipeline not initialized.", file=sys.stderr)
+        return None # Indicate error
+
+    print(f"Generating full audio for: \"{text_to_speak[:50]}...\"")
+    start_gen_time = time.time()
+    try:
+        all_audio_segments = []
+        cleaned_text = text_to_speak.strip()
+        if not cleaned_text:
+            return b'' # Return empty bytes for empty text
+
+        # Generate all segments from the pipeline
+        for _, _, audio_segment in tts_pipeline(cleaned_text, voice=voice, speed=speed):
+            if audio_segment is not None and audio_segment.size > 0:
+                if audio_segment.ndim > 1:
+                    audio_segment = audio_segment.flatten()
+                all_audio_segments.append(audio_segment)
+
+        if not all_audio_segments:
+            print("Warning: No audio segments generated.")
+            return b''
+
+        # Concatenate, convert to NumPy float32, then int16 bytes
+        concatenated_mx_array = mx.concatenate(all_audio_segments)
+        np_array = np.array(concatenated_mx_array, copy=False).astype(np.float32, copy=False)
+        int16_array = np.clip(np_array * 32767, -32768, 32767).astype(np.int16)
+        audio_data_bytes = int16_array.tobytes()
+
+        end_gen_time = time.time()
+        print(f"Full audio generation took {end_gen_time - start_gen_time:.2f} seconds. Total bytes: {len(audio_data_bytes)}")
+        return audio_data_bytes
+
+    except Exception as e:
+        print(f"\nError during full TTS generation: {e}", file=sys.stderr)
+        return None # Indicate error
+
 
 def stream_tts_audio(text_to_speak, voice, speed):
     """
@@ -156,17 +208,17 @@ def stream_tts_audio(text_to_speak, voice, speed):
 
         # --- Yield the CURRENT chunk's audio bytes ---
         if current_audio_bytes:
-            # print(f"  [Stream] Yielding {len(current_audio_bytes)} bytes for chunk {i+1}...") # Debug
+            # --- DEBUG STREAM ---
+            print(f"  [Stream] Yielding {len(current_audio_bytes)} bytes for chunk {i+1}/{total_chunks}...")
+            # --- END DEBUG ---
             yield current_audio_bytes
-        # else:
-            # print(f"  [Stream] No audio data to yield for chunk {i+1}.") # Debug
+        else:
+            # --- DEBUG STREAM ---
+            print(f"  [Stream] No audio data to yield for chunk {i+1}/{total_chunks}.")
+            # --- END DEBUG ---
 
-
-    # Ensure the very last background thread (if any) is joined
-    if tts_thread and tts_thread.is_alive():
-         # print("Waiting for final TTS thread to finish...") # Debug
-         tts_thread.join()
-         # We don't yield the result of the last thread from here
+    # The loop correctly handles joining the thread and getting the result for the final chunk in its last iteration.
+    # No extra handling is needed after the loop.
 
     print("Finished audio stream generation.")
 
@@ -206,36 +258,50 @@ def synthesize_pcm_audio():
         return jsonify({"error": "Missing 'text' in request body"}), 400
 
     # Get optional parameters or use defaults
-    voice = data.get('voice', DEFAULT_TTS_VOICE)
+    voice_from_request = data.get('voice') # Get value, could be None
+    voice = voice_from_request if voice_from_request is not None else DEFAULT_TTS_VOICE # Use default if None or key missing
     speed = float(data.get('speed', DEFAULT_TTS_SPEED))
     # Clamp speed to reasonable values
     speed = max(0.5, min(speed, 2.0))
 
-    # Create the generator for the streaming response
-    audio_generator = stream_tts_audio(text, voice, speed)
+    # # --- DIAGNOSTIC: Generate full audio instead of streaming ---
+    # try:
+    #     full_audio_bytes = generate_full_tts_audio(text, voice, speed)
+    #     if full_audio_bytes is None:
+    #         # Error occurred during generation
+    #         return jsonify({"error": "TTS generation failed internally."}), 500
+    #     elif not full_audio_bytes:
+    #          # No audio generated (e.g., empty text after cleaning)
+    #          return Response(b'', mimetype='audio/pcm') # Return empty response
 
+    #     # Create the response object with the full audio data
+    #     response = Response(full_audio_bytes, mimetype='audio/pcm')
+    #     # No need for custom headers or stream_with_context for non-streaming
+    #     return response
+
+    # except Exception as e:
+    #     app.logger.error(f"Error in /synthesize_pcm (non-streaming): {e}", exc_info=True)
+    #     return jsonify({"error": "An unexpected error occurred during audio synthesis."}), 500
+    # # --- END DIAGNOSTIC ---
+
+    # Create the generator for the streaming response (Original Code)
+    audio_generator = stream_tts_audio(text, voice, speed)
     # Create the response object with the generator and mimetype
     response = Response(stream_with_context(audio_generator), mimetype='audio/pcm')
-
     # Add custom headers so the client knows how to play the PCM stream
     response.headers['X-Audio-Sample-Rate'] = str(TTS_SAMPLE_RATE)
     response.headers['X-Audio-Channels'] = str(AUDIO_CHANNELS)
     response.headers['X-Audio-Bit-Depth'] = str(AUDIO_BIT_DEPTH)
     # Expose custom headers (Flask-CORS handles Access-Control-Allow-Origin)
     response.headers['Access-Control-Expose-Headers'] = 'X-Audio-Sample-Rate, X-Audio-Channels, X-Audio-Bit-Depth, X-Audio-Total-Chunks' # Added Total-Chunks
-
     # Removed manual Access-Control-Allow-Origin header
-
     # TODO: Add X-Audio-Total-Chunks header based on segmentation
     # total_chunks = len(segment_text(text)) # Assuming segment_text exists
     # response.headers['X-Audio-Total-Chunks'] = str(total_chunks)
-
     return response
 
 # ---- Script Entry Point ----
-if __name__ == '__main__':
-    print("Starting Flask server...")
-    # Consider host='0.0.0.0' to make it accessible on your network
-    # Use threaded=True for Flask dev server to handle multiple requests better (basic concurrency)
-    # For production, use a proper WSGI server like gunicorn or waitress
-    app.run(debug=True, threaded=True, host='127.0.0.1', port=5001) # Changed port to 5001
+# Removed the app.run() block.
+# Use 'flask run' or a WSGI server (like gunicorn) to start the app.
+# Example: flask --app app run --debug
+# Example: gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 app:app

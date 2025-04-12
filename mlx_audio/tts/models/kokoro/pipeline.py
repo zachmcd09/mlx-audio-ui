@@ -1,5 +1,6 @@
 import logging
 import re
+import sys
 from dataclasses import dataclass
 from numbers import Number
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union # Import Dict
@@ -8,7 +9,7 @@ import mlx.core as mx
 import mlx.nn as nn
 import torch
 from huggingface_hub import hf_hub_download
-from misaki import en, espeak
+from misaki import en, espeak  # type: ignore
 
 ALIASES = {
     "en-us": "a",

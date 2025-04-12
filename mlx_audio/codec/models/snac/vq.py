@@ -107,7 +107,7 @@ class ResidualVectorQuantize(nn.Module):
         return z_q, codes
 
     def from_codes(self, codes: List[mx.array]) -> mx.array:
-        z_q = 0.0
+        z_q = None # Initialize as None
         for i in range(self.n_codebooks):
             z_p_i = self.quantizers[i].decode_code(codes[i])
             z_q_i = self.quantizers[i].out_proj(z_p_i.moveaxis(1, 2)).moveaxis(1, 2)
@@ -124,8 +124,18 @@ class ResidualVectorQuantize(nn.Module):
 
                 z_q_i = expanded
 
-            z_q += z_q_i
+            if z_q is None:
+                # Initialize z_q with the first z_q_i to get correct shape and dtype
+                z_q = z_q_i
+            else:
+                z_q += z_q_i
 
+        # Ensure z_q is not None before returning (should be initialized in loop if codes is not empty)
+        if z_q is None:
+             # Handle case where codes list might be empty, return appropriate zero array or raise error
+             # Assuming codes is never empty based on usage, but safer to handle.
+             # Returning a zero float array as a placeholder, adjust if needed.
+             return mx.zeros((1,), dtype=mx.float32)
         return z_q
 
 

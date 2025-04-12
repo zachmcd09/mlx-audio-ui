@@ -2,7 +2,7 @@ from collections import deque
 from threading import Event, Lock
 
 import numpy as np
-import sounddevice as sd
+import sounddevice as sd  # type: ignore
 
 
 class AudioPlayer:

@@ -130,16 +130,17 @@ class Model(nn.Module):
             len(input_ids) + 2,
             self.context_length,
         )
-        input_ids = mx.array([[0, *input_ids, 0]])
+        # Use a new variable name for the array version
+        input_ids_arr = mx.array([[0, *input_ids, 0]])
         # Add assertion for mypy
-        assert isinstance(input_ids, mx.array)
-        input_lengths = mx.array([input_ids.shape[-1]])
+        assert isinstance(input_ids_arr, mx.array)
+        input_lengths = mx.array([input_ids_arr.shape[-1]])
         text_mask = mx.arange(int(input_lengths.max()))[None, ...]
         text_mask = mx.repeat(text_mask, input_lengths.shape[0], axis=0).astype(
             input_lengths.dtype
         )
         text_mask = text_mask + 1 > input_lengths[:, None]
-        bert_dur, _ = self.bert(input_ids, attention_mask=(~text_mask).astype(mx.int32))
+        bert_dur, _ = self.bert(input_ids_arr, attention_mask=(~text_mask).astype(mx.int32)) # Use input_ids_arr
         d_en = self.bert_encoder(bert_dur).transpose(0, 2, 1)
         ref_s = ref_s
         s = ref_s[:, 128:]
@@ -151,15 +152,14 @@ class Model(nn.Module):
         indices = mx.concatenate(
             [mx.repeat(mx.array(i), int(n)) for i, n in enumerate(pred_dur)]
         )
-        # Explicitly ensure input_ids is treated as mx.array here
-        input_ids = mx.array(input_ids)
-        pred_aln_trg = mx.zeros((input_ids.shape[1], indices.shape[0]))
+        # Use the array variable here
+        pred_aln_trg = mx.zeros((input_ids_arr.shape[1], indices.shape[0]))
         pred_aln_trg[indices, mx.arange(indices.shape[0])] = 1
         pred_aln_trg = pred_aln_trg[None, :]
         en = d.transpose(0, 2, 1) @ pred_aln_trg
         F0_pred, N_pred = self.predictor.F0Ntrain(en, s)
         t_en = self.text_encoder(
-            input_ids, input_lengths, text_mask
+            input_ids_arr, input_lengths, text_mask # Use array variable
         )  # Working fine in MLX
         asr = t_en @ pred_aln_trg
 

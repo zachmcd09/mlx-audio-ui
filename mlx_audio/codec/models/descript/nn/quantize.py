@@ -1,4 +1,4 @@
-from typing import Optional, Union # Import Optional
+from typing import List, Optional, Union, cast # Import cast
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -117,15 +117,16 @@ class ResidualVectorQuantize(nn.Module):
 
         return z_q, codes, latents, commitment_loss, codebook_loss
 
-    def from_codes(self, codes: mx.array):
-        z_q = mx.zeros((codes.shape[0], 1, 1))  # Initialize as array with proper shape
-        z_p = []
+    def from_codes(self, codes: mx.array) -> tuple[mx.array, mx.array, mx.array]:
+        z_q: mx.array = mx.zeros((codes.shape[0], 1, 1))  # Explicit type annotation
+        z_p: List[mx.array] = list() # type: ignore
         n_codebooks = codes.shape[1]
         for i in range(n_codebooks):
             z_p_i = self.quantizers[i].decode_code(codes[:, i, :])
             z_p.append(z_p_i)
             z_q_i = self.quantizers[i].out_proj(z_p_i.moveaxis(1, 2)).moveaxis(1, 2)
             z_q = z_q + z_q_i
+        # Remove explicit cast before concatenation
         return z_q, mx.concatenate(z_p, axis=1), codes
 
     def from_latents(self, latents: mx.array):

@@ -5,8 +5,8 @@ import sys
 from typing import Optional
 
 import mlx.core as mx
-import soundfile as sf
-from scipy.signal import resample
+import soundfile as sf  # type: ignore
+from scipy.signal import resample  # type: ignore
 
 from .audio_player import AudioPlayer
 from .utils import load_model
@@ -72,16 +72,18 @@ def generate_audio(
     try:
         # Load reference audio for voice matching if specified
 
+        ref_audio_arr = None # New variable for the loaded array
         if ref_audio:
             if not os.path.exists(ref_audio):
                 raise FileNotFoundError(f"Reference audio file not found: {ref_audio}")
-            ref_audio = load_audio(ref_audio)
+            ref_audio_arr = load_audio(ref_audio) # Assign to new variable
             if not ref_text:
                 print("Ref_text not found. Transcribing ref_audio...")
                 # mlx_whisper seems takes long time to import. Import only necessary.
-                import mlx_whisper
+                import mlx_whisper  # type: ignore
 
-                ref_text = mlx_whisper.transcribe(ref_audio, path_or_hf_repo=stt_model)[
+                # Use the loaded array for transcription
+                ref_text = mlx_whisper.transcribe(ref_audio_arr, path_or_hf_repo=stt_model)[
                     "text"
                 ]
                 print("Ref_text", ref_text)
@@ -104,7 +106,7 @@ def generate_audio(
             voice=voice,
             speed=speed,
             lang_code=lang_code,
-            ref_audio=ref_audio,
+            ref_audio=ref_audio_arr, # Pass the loaded array
             ref_text=ref_text,
             temperature=temperature,
             verbose=True,

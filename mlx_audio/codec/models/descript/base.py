@@ -1,12 +1,12 @@
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional, Union  # <-- Import Optional, Any, Callable
+from typing import Any, Callable, Optional, Union, cast # <-- Import Optional, Any, Callable, cast
 
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
-import soundfile as sf
+import soundfile as sf  # type: ignore
 from einops.array_api import rearrange
 
 SUPPORTED_VERSIONS = ["1.0.0"]
@@ -199,7 +199,8 @@ class CodecMixin:
             ),
             chunk_length=chunk_length,
             original_length=signal_duration,
-            input_db=float(input_db.item()),
+            # Cast the result of item() if it exists, otherwise cast input_db directly
+            input_db=float(cast(float, input_db.item())) if hasattr(input_db, 'item') else float(cast(Union[float, int, str], input_db)),
             channels=nac,
             sample_rate=original_sr,
             padding=self.padding,
@@ -237,14 +238,17 @@ class CodecMixin:
             r = self.decode(z)
             recons.append(r)
 
-        recons = mx.concatenate(recons, axis=1)
-        recons = rearrange(recons, "1 n 1 -> 1 n")
+        # Use a new variable for the concatenated array
+        recons_arr = mx.concatenate(recons, axis=1)
+        recons_arr = rearrange(recons_arr, "1 n 1 -> 1 n")
 
         target_db = obj.input_db
         normalize_db = -16
 
         if normalize_db is not None:
-            recons = recons * mx.power(10, (target_db - normalize_db) / 20)
+            # Apply scaling to the concatenated array
+            recons_arr = recons_arr * mx.power(10, (target_db - normalize_db) / 20)
 
         self.padding = original_padding
-        return recons
+        # Return the final array
+        return recons_arr

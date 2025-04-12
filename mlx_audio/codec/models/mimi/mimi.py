@@ -178,9 +178,9 @@ class Mimi(nn.Module):
     ) -> nn.Module:
         weights = []
         # Rename loop variables to avoid potential conflicts
-        for key, value in mx.load(file).items():
-            value: mx.array = value
-            key: str = ".".join([s.removeprefix("_") for s in key.split(".")])
+        for orig_key, orig_value in mx.load(file).items():
+            value: mx.array = orig_value
+            key: str = ".".join([s.removeprefix("_") for s in orig_key.split(".")]) # Use orig_key here
             if key.startswith("encoder.model."):
                 key = key.replace("encoder.model.", "encoder.")
             if key.startswith("decoder.model."):
@@ -222,11 +222,11 @@ class Mimi(nn.Module):
                 or key.endswith(".output_proj.weight")
                 or key.endswith(".input_proj.weight")
             ):
-                value = value.swapaxes(-1, -2)
+                value = value.swapaxes(-1, -2) # Use the hinted 'value'
             # PyTorch layout for conv-transposed weights is inC, outC, kSize, for MLX it's outC, kSize, inC
             if key.endswith(".convtr.weight"):
-                value = value.transpose(1, 2, 0)
-            weights.append((key, value))
+                value = value.transpose(1, 2, 0) # Use the hinted 'value'
+            weights.append((key, value)) # Append modified key and potentially modified value
         return self.load_weights(weights, strict=strict)
 
     @classmethod

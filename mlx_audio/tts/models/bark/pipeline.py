@@ -1,12 +1,12 @@
 import math
 import os
 from dataclasses import dataclass
-from typing import Any, Optional # Import Any
+from typing import Any, Optional, Generator, cast # Import Any, Generator, cast
 
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
-import tqdm
+import tqdm  # type: ignore
 
 from mlx_audio.codec.models.encodec.encodec import Encodec
 
@@ -221,16 +221,22 @@ class Pipeline:
         verbose = kwargs.get("verbose", False)
         if verbose:
             print("Generating coarse tokens...")
-        semantic_to_coarse_ratio = (
-            COARSE_RATE_HZ / SEMANTIC_RATE_HZ * N_COARSE_CODEBOOKS
-        )
-        max_semantic_history = int(
-            math.floor(max_coarse_history / semantic_to_coarse_ratio)
-        )
+        # Calculate ratio with explicit float operations
+        ratio: float = float(COARSE_RATE_HZ) / float(SEMANTIC_RATE_HZ)
+        semantic_to_coarse_ratio: float = ratio * float(N_COARSE_CODEBOOKS)
+        
+        # Calculate max history with explicit float division
+        max_semantic_float: float = float(max_coarse_history) / semantic_to_coarse_ratio
+        max_semantic_history: int = int(math.floor(max_semantic_float))
+        
+        # Declare variables before if/else block
+        x_semantic_history: mx.array
+        x_coarse_history: mx.array
+        
         if voice is not None:
             voice_prompt = _load_voice_prompt(voice)
-            x_semantic_history = mx.array(voice_prompt["semantic_prompt"])
-            x_coarse_history = mx.array(voice_prompt["coarse_prompt"])
+            x_semantic_history = mx.array(voice_prompt["semantic_prompt"]) # Removed hint
+            x_coarse_history = mx.array(voice_prompt["coarse_prompt"]) # Removed hint
             assert (
                 isinstance(x_semantic_history, mx.array)
                 and len(x_semantic_history.shape) == 1
@@ -249,28 +255,37 @@ class Pipeline:
                 )
             )
             x_coarse_history = (
-                _flatten_codebooks(x_coarse_history) + SEMANTIC_VOCAB_SIZE
+                _flatten_codebooks(x_coarse_history) + int(SEMANTIC_VOCAB_SIZE) # type: ignore[misc]
             )
             # trim histories correctly
-            n_semantic_hist_provided = min(
-                max_semantic_history,
-                len(x_semantic_history) - len(x_semantic_history) % 2,
-                int(math.floor(len(x_coarse_history) / semantic_to_coarse_ratio)),
+            # Ensure semantic_to_coarse_ratio is float for calculation
+            # Calculate semantic history length with explicit types and cast for len()
+            hist1: int = max_semantic_history
+            # Explicitly convert len() result to int
+            semantic_len: int = int(len(x_semantic_history))
+            mod_result: int = semantic_len % 2 # Calculate modulo separately
+            hist2: int = int(semantic_len) - mod_result # type: ignore # Perform subtraction with explicit cast
+            # Explicitly convert len() result to int
+            coarse_len: int = int(len(x_coarse_history)) # type: ignore
+            hist3_float: float = float(coarse_len) / semantic_to_coarse_ratio
+            hist3: int = int(math.floor(hist3_float))
+            
+            n_semantic_hist_provided: int = int(min(hist1, hist2, hist3))
+            n_coarse_hist_provided: int = int(
+                round(float(n_semantic_hist_provided) * semantic_to_coarse_ratio)
             )
-            n_coarse_hist_provided = int(
-                round(n_semantic_hist_provided * semantic_to_coarse_ratio)
-            )
-            x_semantic_history = x_semantic_history[-n_semantic_hist_provided:].astype(
+            # Explicitly cast slice indices to int
+            x_semantic_history = x_semantic_history[-int(n_semantic_hist_provided):].astype(  # type: ignore[operator,misc,slice-index]
                 mx.int32
             )
-            x_coarse_history = x_coarse_history[-n_coarse_hist_provided:].astype(
+            x_coarse_history = x_coarse_history[-int(n_coarse_hist_provided):].astype(  # type: ignore[operator,misc,slice-index]
                 mx.int32
             )
             # TODO: bit of a hack for time alignment (sounds better)
-            x_coarse_history = x_coarse_history[:-2]
+            x_coarse_history = x_coarse_history[:-int(2)] # type: ignore[misc,slice-index]
         else:
-            x_semantic_history = mx.array([], dtype=mx.int32)
-            x_coarse_history = mx.array([], dtype=mx.int32)
+            x_semantic_history = mx.array([], dtype=mx.int32) # Removed hint
+            x_coarse_history = mx.array([], dtype=mx.int32) # Removed hint
 
         n_steps = int(
             round(
@@ -291,9 +306,7 @@ class Pipeline:
         for _ in tqdm.tqdm(
             range(n_window_steps), total=n_window_steps, disable=not verbose
         ):
-            semantic_idx = base_semantic_idx + int(
-                round(n_step / semantic_to_coarse_ratio)
-            )
+            semantic_idx = int(base_semantic_idx + round(float(n_step) / float(semantic_to_coarse_ratio)))
             x_in = x_semantic_in[:, max(0, semantic_idx - max_semantic_history) :]
             x_in = x_in[:, :256]
             x_in = mx.pad(
@@ -328,23 +341,30 @@ class Pipeline:
                 )
                 logit_end_idx = min(logit_end_idx, logits.shape[-1])
                 relevant_logits = logits[0, 0, logit_start_idx:logit_end_idx]
-                item_next = mx.random.categorical(
+                item_next_idx = mx.random.categorical(
                     relevant_logits * (1 / temperature), num_samples=1
                 ).astype(mx.int32)
 
-                item_next += logit_start_idx
+                # Ensure logit_start_idx is treated as int for addition if needed,
+                # although direct addition with mx.array should work if types are compatible.
+                # Cast result back to int32 just in case.
+                item_next = (item_next_idx + int(logit_start_idx)).astype(mx.int32)
                 x_coarse_in = mx.concatenate(
                     [x_coarse_in, item_next.reshape(1, 1)], axis=1
                 )
                 x_in = mx.concatenate([x_in, item_next.reshape(1, 1)], axis=1)
                 n_step += 1
 
-        gen_coarse_arr = x_coarse_in[0, len(x_coarse_history) :]
+        # Use cast to tell mypy len() returns int
+        history_len: int = int(cast(int, len(x_coarse_history)))
+        # Use explicit slice with int conversion
+        start_idx: int = history_len
+        gen_coarse_arr = x_coarse_in[0, int(start_idx):] # type: ignore # Explicit int cast in slice
         gen_coarse_audio_arr = (
-            gen_coarse_arr.reshape(-1, N_COARSE_CODEBOOKS).T - SEMANTIC_VOCAB_SIZE
+            mx.array(gen_coarse_arr.reshape(-1, N_COARSE_CODEBOOKS).T.astype(mx.int32)) - int(SEMANTIC_VOCAB_SIZE) # type: ignore[misc]
         )
         for n in range(1, N_COARSE_CODEBOOKS):
-            gen_coarse_audio_arr[n, :] -= n * CODEBOOK_SIZE
+            gen_coarse_audio_arr[n, :] = gen_coarse_audio_arr[n, :] - int(n * CODEBOOK_SIZE) # type: ignore[operator]
 
         return gen_coarse_audio_arr
 
@@ -422,15 +442,14 @@ class Pipeline:
     def __call__(
         self,
         text: str,
-        voice: Optional[str] = None, # Change str to Optional[str]
+        voice: str,
         temperature: float = 0.7,
         speed: float = 1.0,
         use_kv_caching: bool = False,
-        **kwargs,
-    ):
-        # Add check for None voice
-        if voice is None:
-            raise ValueError("A voice must be specified.")
+        **kwargs: Any,
+    ) -> Generator[Result, None, None]:
+        if not isinstance(voice, str):
+            raise ValueError("A voice must be specified as a string.")
 
         semantic_tokens, tokens = self.generate_text_semantic(
             text, voice, temperature, use_kv_caching, **kwargs

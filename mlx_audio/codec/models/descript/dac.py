@@ -111,7 +111,8 @@ class Decoder(nn.Module):
         d_out: int = 1,
     ):
         super().__init__()
-        layers = [WNConv1d(input_channel, channels, kernel_size=7, padding=3)]
+        # Explicitly type hint layers as List[nn.Module]
+        layers: List[nn.Module] = [WNConv1d(input_channel, channels, kernel_size=7, padding=3)]
 
         for i, stride in enumerate(rates):
             input_dim = channels // 2**i
@@ -156,7 +157,8 @@ class DAC(nn.Module, CodecMixin):
 
         self.latent_dim = latent_dim
 
-        self.hop_length = np.prod(encoder_rates)
+        # Cast numpy int to Python int
+        self.hop_length = int(np.prod(encoder_rates))
         self.encoder = Encoder(encoder_dim, encoder_rates, latent_dim)
 
         self.n_codebooks = n_codebooks
@@ -239,7 +241,8 @@ class DAC(nn.Module, CodecMixin):
         x = self.decode(z)
 
         if return_loss:
-            return mx.losses.mse(x, audio_data)
+            # Use correct path for mse_loss
+            return nn.losses.mse_loss(x, audio_data)
 
         return {
             "audio": x[..., :length],

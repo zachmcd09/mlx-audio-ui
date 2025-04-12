@@ -2,9 +2,9 @@ import argparse
 
 import mlx.core as mx
 import numpy as np
-import silentcipher
-import soundfile as sf
-from scipy import signal
+import silentcipher  # type: ignore
+import soundfile as sf  # type: ignore
+from scipy import signal  # type: ignore
 
 # This watermark key is public, it is not secure.
 # If using CSM 1B in another application, use a new private key and keep it secret.

@@ -42,6 +42,7 @@ export function useAudioStreamer(): AudioStreamerControls {
   const nextTokenIndexRef = useRef<number>(0); // Tracks the index of the *next* chunk to play
   const isFetchingRef = useRef<boolean>(false);
   const currentPlaybackParamsRef = useRef<PlaybackParams | null>(null); // Store params for resume
+  const leftoverBytesRef = useRef<Uint8Array | null>(null); // Buffer for leftover bytes
 
   // Internal state for the hook if needed (e.g., sample rate)
   const [sampleRate, setSampleRate] = useState<number>(24000); // Default, read from header
@@ -68,6 +69,7 @@ export function useAudioStreamer(): AudioStreamerControls {
     console.log('Cleaning up audio resources...');
     readerRef.current?.cancel().catch(() => {}); // Cancel stream reading
     readerRef.current = null;
+    leftoverBytesRef.current = null; // Clear leftover bytes on cleanup
     if (currentSourceNodeRef.current) {
       try {
         currentSourceNodeRef.current.onended = null; // Remove handler
@@ -97,14 +99,7 @@ export function useAudioStreamer(): AudioStreamerControls {
       // for (let i = 0; i < pcm16.length; i++) {
       //   float32Data[i] = pcm16[i] / 32768.0;
       // --- Correct 16-bit Signed PCM to Float32 Conversion ---
-      // Ensure the byte length is even (since each sample is 2 bytes)
-      if (bytes.length % 2 !== 0) {
-        console.error("Invalid byte length for 16-bit PCM decoding:", bytes.length);
-        _setErrorMessage("Received incomplete audio data chunk.");
-        _setPlaybackState('Error');
-        // Don't cleanup here, let the stream reader handle termination
-        return null;
-      }
+      // The calling loop (_fetchAndDecodeLoop) now ensures `bytes` has an even length.
 
       // Create an Int16Array view on the received bytes
       // Assumes little-endian byte order, which is common for PCM WAV. Adjust if needed.
@@ -222,7 +217,8 @@ export function useAudioStreamer(): AudioStreamerControls {
   const _fetchAndDecodeLoop = useCallback(
     async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
       isFetchingRef.current = true;
-      let fetchedIndex = 0; // Counter for received chunks
+      let fetchedIndex = 0; // Counter for decoded chunks
+      leftoverBytesRef.current = null; // Ensure leftover buffer is clear at start
 
       try {
         while (true) {
@@ -231,6 +227,14 @@ export function useAudioStreamer(): AudioStreamerControls {
 
           if (done) {
             console.log('Stream finished.');
+            // Check for any remaining leftover byte after stream ends
+            if (leftoverBytesRef.current && leftoverBytesRef.current.length > 0) {
+              console.error(`Stream ended with leftover byte: ${leftoverBytesRef.current[0]}. Total stream length might be odd.`);
+              // Optionally set an error state here if this is critical
+              _setErrorMessage("Incomplete final audio sample received.");
+              _setPlaybackState('Error');
+            }
+            leftoverBytesRef.current = null; // Clear it regardless
             isFetchingRef.current = false;
             // If the queue becomes empty after fetching is done, trigger final state check
             _tryPlayNextFromQueue();
@@ -238,17 +242,49 @@ export function useAudioStreamer(): AudioStreamerControls {
           }
 
           if (value) {
-            console.log(`Received chunk ${fetchedIndex}, decoding...`);
-            const decodedBuffer = await _decodeSentenceData(value);
-            if (decodedBuffer) {
-              decodedQueueRef.current.push({ index: fetchedIndex, buffer: decodedBuffer });
-              console.log(`Chunk ${fetchedIndex} decoded and queued.`);
-              fetchedIndex++;
-              // Try to play immediately if nothing is playing
-              _tryPlayNextFromQueue();
+            // Combine leftover bytes from previous chunk (if any) with the new chunk
+            const combinedBytes: Uint8Array = new Uint8Array(
+              (leftoverBytesRef.current ? leftoverBytesRef.current.length : 0) + value.length
+            );
+            if (leftoverBytesRef.current) {
+              combinedBytes.set(leftoverBytesRef.current, 0);
+            }
+            combinedBytes.set(value, leftoverBytesRef.current ? leftoverBytesRef.current.length : 0);
+
+            // Determine how many full 16-bit samples we have (even number of bytes)
+            const bytesToProcessLength = Math.floor(combinedBytes.length / 2) * 2;
+            let bytesToProcess: Uint8Array | null = null;
+
+            if (bytesToProcessLength > 0) {
+              bytesToProcess = combinedBytes.slice(0, bytesToProcessLength);
+            }
+
+            // Store the remaining odd byte (if any) for the next iteration
+            if (combinedBytes.length % 2 !== 0) {
+              leftoverBytesRef.current = combinedBytes.slice(bytesToProcessLength);
+              // console.log(`Storing leftover byte: ${leftoverBytesRef.current[0]}`);
             } else {
-               // Decoding error handled within _decodeSentenceData
-               break; // Stop fetching on decode error
+              leftoverBytesRef.current = null; // No leftover byte
+            }
+
+            // Decode the processable bytes
+            if (bytesToProcess) {
+              // console.log(`Decoding ${bytesToProcess.length} bytes for chunk ${fetchedIndex}...`);
+              const decodedBuffer = await _decodeSentenceData(bytesToProcess);
+              if (decodedBuffer) {
+                decodedQueueRef.current.push({ index: fetchedIndex, buffer: decodedBuffer });
+                console.log(`Chunk ${fetchedIndex} decoded and queued.`);
+                fetchedIndex++;
+                // Try to play immediately if nothing is playing
+                _tryPlayNextFromQueue();
+              } else {
+                 // Decoding error handled within _decodeSentenceData
+                 // Clear leftover bytes as the stream is likely corrupted
+                 leftoverBytesRef.current = null;
+                 break; // Stop fetching on decode error
+              }
+            } else {
+              // console.log("Received chunk resulted in 0 processable bytes after combining leftovers, waiting for more data.");
             }
           }
         }
@@ -261,6 +297,10 @@ export function useAudioStreamer(): AudioStreamerControls {
         isFetchingRef.current = false;
         reader.releaseLock(); // Release lock when done or on error
         console.log("Stream reader released.")
+        // Ensure leftover bytes are cleared if loop exits unexpectedly
+        if (useAppStore.getState().playbackState === 'Error') { // Check Zustand state directly
+            leftoverBytesRef.current = null;
+        }
       }
     },
     // Add _tryPlayNextFromQueue (the memoized version) to dependencies

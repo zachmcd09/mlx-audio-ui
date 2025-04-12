@@ -9,7 +9,7 @@ from mlx_lm.models import cache as cache_utils
 from mlx_lm.models.base import BaseModelArgs, create_attention_mask
 from mlx_lm.models.rope_utils import initialize_rope
 from mlx_lm.sample_utils import make_logits_processors, make_sampler
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 from transformers import AutoTokenizer
 
 from mlx_audio.codec.models.snac import SNAC
@@ -24,11 +24,11 @@ class ModelConfig(BaseModelArgs):
     num_hidden_layers: int
     intermediate_size: int
     num_attention_heads: int
+    num_key_value_heads: int  # Moved before fields with defaults
     rms_norm_eps: float
     vocab_size: int
     head_dim: Optional[int] = None
     max_position_embeddings: Optional[int] = None
-    num_key_value_heads: Optional[int] = None
     attention_bias: bool = False
     mlp_bias: bool = False
     rope_theta: float = 500000.0
@@ -210,7 +210,7 @@ class LlamaModel(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        mask: mx.array = None,
+        mask: Optional[mx.array] = None, # Use Optional
         cache=None,
     ):
         h = self.embed_tokens(inputs)
@@ -240,7 +240,7 @@ class Model(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        mask: mx.array = None,
+        mask: Optional[mx.array] = None, # Use Optional
         cache=None,
     ):
         out = self.model(inputs, mask, cache)
@@ -374,10 +374,11 @@ class Model(nn.Module):
 
             batch_input_ids.append(mx.concatenate(modified_input_ids, axis=1))
 
-        batch_input_ids = mx.concatenate(batch_input_ids, axis=0)
-        batch_mask = mx.where(batch_input_ids == pad_token, False, True)
+        # Use new variable name for concatenated array
+        batch_input_ids_arr = mx.concatenate(batch_input_ids, axis=0)
+        batch_mask = mx.where(batch_input_ids_arr == pad_token, False, True)
 
-        return batch_input_ids, batch_mask
+        return batch_input_ids_arr, batch_mask
 
     def generate(
         self,
@@ -388,7 +389,7 @@ class Model(nn.Module):
         split_pattern: str = "\n",
         max_tokens: int = 1200,
         verbose: bool = False,
-        ref_audio: mx.array = None,
+        ref_audio: Optional[mx.array] = None, # Use Optional
         ref_text: Optional[str] = None,
         **kwargs,
     ):

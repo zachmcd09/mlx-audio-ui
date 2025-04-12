@@ -2,14 +2,21 @@ import argparse
 import importlib.util
 import logging
 import os
-from pathlib import Path  # <-- Add import
+from pathlib import Path
+from typing import Optional, Any, Generator, Tuple
+
+# Default constants for TTS
+DEFAULT_TTS_VOICE: str = "af_heart"  # type: ignore
+DEFAULT_TTS_SPEED: float = 1.0  # type: ignore
+DEFAULT_TTS_MODEL_REPO_ID: str = "mlx-community/Kokoro-82M-4bit"  # type: ignore
+
 import sys
 import tempfile
 import uuid
 
 import numpy as np
 import requests
-import soundfile as sf
+import soundfile as sf  # type: ignore
 import uvicorn
 from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,10 +71,20 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 logger.debug(f"Using output folder: {OUTPUT_FOLDER}")
 
 
+# Adjust signature to match expected FastRTC handler type
+from typing import Optional, Any, Generator, Tuple # Add necessary imports
+from numpy.typing import NDArray
+import numpy as np # Ensure numpy is imported
+
 def speech_to_speech_handler(
-    audio: tuple[int, NDArray[np.int16]], voice: str, speed: float, model: str
-):
-    # Add check for loaded model
+    audio: Tuple[int, NDArray[np.int16]], context: Optional[Any] = None
+) -> Generator[Tuple[int, NDArray[np.float32]], None, None]:
+    # Extract parameters from context if available
+    voice = getattr(context, 'voice', DEFAULT_TTS_VOICE) # Use default if not found
+    speed = getattr(context, 'speed', DEFAULT_TTS_SPEED)
+    model_repo_id = getattr(context, 'model', DEFAULT_TTS_MODEL_REPO_ID) # Assuming context has 'model'
+
+    # Add check for loaded model (tts_model is global)
     if tts_model is None:
         logger.error("TTS model not loaded when speech_to_speech_handler was called.")
         # Depending on desired behavior, you might raise an exception
@@ -304,7 +321,7 @@ def find_static_dir():
 
     # Method 2: Use importlib_resources (Python 3.8)
     try:
-        import importlib_resources
+        import importlib_resources  # type: ignore
 
         static_dir = importlib_resources.files("mlx_audio").joinpath("tts")
         static_dir_str = str(static_dir)
