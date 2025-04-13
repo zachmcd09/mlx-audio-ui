@@ -1,0 +1,31 @@
+2025-04-13 13:23:31,912 [INFO] model_diagnostics: 
+=== Testing Kokoro with Diagnostics - Proper Config ===
+2025-04-13 13:23:31,912 [WARNING] model_diagnostics: Error tracking memory usage: No module named 'psutil'
+2025-04-13 13:23:31,913 [INFO] model_diagnostics: Saved diagnostic result to diagnostics_output/20250413_132331_ModelConfig_success.json
+2025-04-13 13:23:31,913 [INFO] model_diagnostics: Model initialization successful: mlx_audio.tts.models.kokoro.kokoro.ModelConfig in 0.00s
+2025-04-13 13:23:31,920 [WARNING] model_diagnostics: Error tracking memory usage: No module named 'psutil'
+2025-04-13 13:23:31,957 [ERROR] model_diagnostics: Error creating Model with diagnostics: Object of type ModelConfig is not JSON serializable
+2025-04-13 13:23:31,960 [INFO] model_diagnostics: 
+=== Testing Kokoro with Diagnostics - Bad Config ===
+2025-04-13 13:23:31,961 [WARNING] model_diagnostics: Error tracking memory usage: No module named 'psutil'
+2025-04-13 13:23:31,962 [INFO] model_diagnostics: Saved diagnostic result to diagnostics_output/20250413_132331_ModelConfig_failure.json
+2025-04-13 13:23:31,962 [ERROR] model_diagnostics: Model initialization failed: mlx_audio.tts.models.kokoro.kokoro.ModelConfig - TypeError: ModelConfig.__init__() missing 1 required positional argument: 'max_dur'
+2025-04-13 13:23:31,962 [INFO] model_diagnostics: Expected error creating bad ModelConfig: ModelConfig.__init__() missing 1 required positional argument: 'max_dur'
+2025-04-13 13:23:31,962 [INFO] model_diagnostics: Diagnostic report generated: diagnostics_output/diagnostic_report_20250413_132331.md
+2025-04-13 13:23:31,962 [INFO] model_diagnostics: Diagnostic report generated at: diagnostics_output/diagnostic_report_20250413_132331.md
+2025-04-13 13:23:32,014 [INFO] model_diagnostics: 
+=== Testing Encodec with Diagnostics - Proper Config ===
+2025-04-13 13:23:32,015 [WARNING] model_diagnostics: Error tracking memory usage: No module named 'psutil'
+2025-04-13 13:23:32,015 [INFO] model_diagnostics: Saved diagnostic result to diagnostics_output/20250413_132332_EncodecConfig_success.json
+2025-04-13 13:23:32,015 [INFO] model_diagnostics: Model initialization successful: mlx_audio.codec.models.encodec.encodec.EncodecConfig in 0.00s
+2025-04-13 13:23:32,016 [WARNING] model_diagnostics: Unknown parameter 'config' for model 'mlx_audio.codec.models.encodec.encodec.Encodec'
+2025-04-13 13:23:32,018 [WARNING] model_diagnostics: Error tracking memory usage: No module named 'psutil'
+2025-04-13 13:23:32,019 [ERROR] model_diagnostics: Error creating Encodec with diagnostics: Object of type EncodecConfig is not JSON serializable
+2025-04-13 13:23:32,019 [INFO] model_diagnostics: 
+=== Testing Encodec with Diagnostics - Bad Config ===
+2025-04-13 13:23:32,020 [WARNING] model_diagnostics: Error tracking memory usage: No module named 'psutil'
+2025-04-13 13:23:32,021 [INFO] model_diagnostics: Saved diagnostic result to diagnostics_output/20250413_132332_EncodecConfig_success.json
+2025-04-13 13:23:32,021 [INFO] model_diagnostics: Model initialization successful: mlx_audio.codec.models.encodec.encodec.EncodecConfig in 0.00s
+2025-04-13 13:23:32,021 [INFO] model_diagnostics: Successfully created bad EncodecConfig (unexpected)
+2025-04-13 13:23:32,021 [INFO] model_diagnostics: Diagnostic report generated: diagnostics_output/diagnostic_report_20250413_132332.md
+2025-04-13 13:23:32,021 [INFO] model_diagnostics: Diagnostic report generated at: diagnostics_output/diagnostic_report_20250413_132332.md

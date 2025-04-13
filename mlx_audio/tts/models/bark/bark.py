@@ -2,7 +2,7 @@ import argparse
 import glob
 import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field # Import field
 from enum import Enum
 from typing import Dict, Optional, Tuple, Union
 
@@ -47,7 +47,7 @@ def filter_dataclass_fields(data_dict, dataclass_type):
 
 @dataclass
 class SemanticConfig(BaseModelArgs):
-    bad_words_ids: list[list[int]] = []
+    bad_words_ids: list[list[int]] = field(default_factory=list) # Use default_factory
     block_size: int = 1024
     input_vocab_size: int = 129600
     output_vocab_size: int = 129600
@@ -57,7 +57,7 @@ class SemanticConfig(BaseModelArgs):
     bias: bool = False
     model_type: str = "semantic"
     dropout: float = 0.0
-    architectures: list[str] = []
+    architectures: list[str] = field(default_factory=list) # Use default_factory
 
 
 @dataclass

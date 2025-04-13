@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "model_class": "mlx_audio.tts.models.kokoro.kokoro.Model",
+  "duration": 0.021088123321533203,
+  "start_time": "2025-04-13T13:23:31.913107",
+  "end_time": "2025-04-13T13:23:31.934195",
+  "error_type": null,
+  "error_message": null,
+  "traceback": null,
+  "parameter_values": {
+    "config": 

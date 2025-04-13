@@ -22,16 +22,21 @@ interface AppState {
   // Configuration
   speed: number; // Playback speed (e.g., 1.0)
   voice: string | null; // Selected voice ID (null if only one option or none selected)
+  showAdvancedPanel: boolean; // Whether the advanced panel is shown
 
   // Progress Indication (driven by backend)
   totalChunks: number; // Total audio chunks (sentences/segments) expected
   currentChunkIndex: number; // Index of the chunk currently playing or last played (-1 if none)
+  
+  // Text highlighting during playback
+  highlightedTextRange: {start: number, end: number} | null; // Range of text being highlighted during playback
 
   // --- Actions ---
   // Actions triggered by UI components
   setInputText: (text: string) => void;
   setSpeed: (speed: number) => void;
   setVoice: (voice: string | null) => void;
+  toggleAdvancedPanel: () => void;
   // Actions that will likely trigger the audio hook (implementation details TBD in hook/component)
   requestPlayback: (text: string, voice: string | null, speed: number) => void;
   requestPause: () => void;
@@ -44,6 +49,7 @@ interface AppState {
   _clearError: () => void;
   _setTotalChunks: (count: number) => void;
   _setCurrentChunkIndex: (index: number) => void;
+  _setHighlightedTextRange: (range: {start: number, end: number} | null) => void;
 }
 
 // Create the store hook
@@ -57,6 +63,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   voice: null, // TODO: Set a default voice if available from backend later
   totalChunks: 0,
   currentChunkIndex: -1,
+  highlightedTextRange: null,
+  showAdvancedPanel: false,
 
   // --- Action Implementations ---
 
@@ -76,6 +84,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSpeed: (newSpeed) => set({ speed: newSpeed }), // Hook will read this value
 
   setVoice: (newVoice) => set({ voice: newVoice }), // Hook will read this value
+  
+  toggleAdvancedPanel: () => set((state) => ({ showAdvancedPanel: !state.showAdvancedPanel })),
 
   // Actions to signal intent to the audio hook (hook needs to be called separately)
   requestPlayback: (text, voice, speed) => {
@@ -134,4 +144,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   _setTotalChunks: (count) => set({ totalChunks: count }),
 
   _setCurrentChunkIndex: (index) => set({ currentChunkIndex: index }),
+  
+  // Helper to update text highlighting
+  _setHighlightedTextRange: (range: {start: number, end: number} | null) => set({ 
+    highlightedTextRange: range 
+  }),
 }));

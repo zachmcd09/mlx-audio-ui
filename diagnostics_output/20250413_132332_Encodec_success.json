@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "model_class": "mlx_audio.codec.models.encodec.encodec.Encodec",
+  "duration": 0.0030241012573242188,
+  "start_time": "2025-04-13T13:23:32.015923",
+  "end_time": "2025-04-13T13:23:32.018947",
+  "error_type": null,
+  "error_message": null,
+  "traceback": null,
+  "parameter_values": {
+    "config": 

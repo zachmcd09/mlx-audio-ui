@@ -1,0 +1,23 @@
+TTS Model Initialization Tests - 2025-04-13 12:02:30
+Working directory: /Users/ZachM/Projects/mlx-audio-ui
+
+
+Kokoro Model Test (HF Config): SUCCESS
+Command: python test_model_initialization.py --model kokoro --use-hf-config
+Description: Testing Kokoro model initialization using HuggingFace config
+----------------------------------------
+
+Kokoro Model Test (Manual Config): SUCCESS
+Command: python test_model_initialization.py --model kokoro
+Description: Testing Kokoro model initialization using manual config
+----------------------------------------
+
+Bark Model Test: SUCCESS
+Command: python test_model_initialization.py --model bark
+Description: Testing Bark model initialization
+----------------------------------------
+
+Encodec Parameter Debug (Model Only): FAILURE
+Command: python debug_encodec_params.py --model-only
+Description: Analyzing Encodec model structure without weights
+----------------------------------------

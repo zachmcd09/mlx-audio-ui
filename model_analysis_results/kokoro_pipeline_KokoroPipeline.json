@@ -1,0 +1,42 @@
+{
+  "model_class": "KokoroPipeline",
+  "module": "mlx_audio.tts.models.kokoro.pipeline",
+  "parameters": [
+    {
+      "name": "lang_code",
+      "type": "<class 'str'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "<class 'mlx.nn.layers.base.Module'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": ""
+    },
+    {
+      "name": "repo_id",
+      "type": "<class 'str'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": ""
+    },
+    {
+      "name": "trf",
+      "type": "<class 'bool'>",
+      "default_value": "False",
+      "is_required": false,
+      "description": ""
+    }
+  ],
+  "children": {},
+  "parameter_count": {},
+  "initialization_trace": [
+    "LogRecord.__init__ in __init__.py",
+    "TracebackException.__init__ in _formatting.py",
+    "FrameSummary.__init__ in traceback.py",
+    "_ExceptionPrintContext.__init__ in _formatting.py"
+  ]
+}

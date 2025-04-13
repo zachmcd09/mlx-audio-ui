@@ -1,7 +1,7 @@
 import functools
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field # Import field
 from pathlib import Path
 from types import SimpleNamespace
 from typing import List, Optional, Tuple, Union
@@ -38,12 +38,12 @@ class EncodecConfig:
     last_kernel_size: int = 7
     trim_right_ratio: float = 1.0
     compress: int = 2
-    upsampling_ratios: List[int] = [] # Initialize with empty list
-    target_bandwidths: List[float] = [] # Initialize with empty list
+    upsampling_ratios: List[int] = field(default_factory=list) # Use default_factory
+    target_bandwidths: List[float] = field(default_factory=list) # Use default_factory
     sampling_rate: int = 24000
     chunk_length_s: Optional[float] = None
     overlap: Optional[float] = None
-    architectures: List[str] = [] # Initialize with empty list
+    architectures: List[str] = field(default_factory=list) # Use default_factory
 
 
 def preprocess_audio(

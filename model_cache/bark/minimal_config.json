@@ -1,0 +1,21 @@
+{
+  "version": "v0",
+  "semantic_config": {
+    "hidden_size": 512,
+    "num_heads": 8,
+    "num_layers": 12,
+    "vocab_size": 10000
+  },
+  "coarse_config": {
+    "hidden_size": 1024,
+    "num_heads": 16,
+    "num_layers": 24,
+    "vocab_size": 1024
+  },
+  "fine_config": {
+    "hidden_size": 768,
+    "num_heads": 12,
+    "num_layers": 12,
+    "vocab_size": 8192
+  }
+}

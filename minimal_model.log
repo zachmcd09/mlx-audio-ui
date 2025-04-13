@@ -1,0 +1,60 @@
+2025-04-13 13:23:28,725 [INFO] 
+=== Testing Minimal Kokoro Model Initialization ===
+2025-04-13 13:23:29,693 [INFO] Creating minimal Kokoro model
+2025-04-13 13:23:29,693 [INFO] Created minimal Kokoro config at model_cache/kokoro/minimal_config.json
+2025-04-13 13:23:29,712 [INFO] Successfully created minimal Kokoro model
+2025-04-13 13:23:29,712 [INFO] 
+=== Testing Minimal Encodec Model Initialization ===
+2025-04-13 13:23:29,760 [INFO] Creating minimal Encodec model
+2025-04-13 13:23:29,760 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:29,761 [INFO] Successfully created minimal Encodec model
+2025-04-13 13:23:29,761 [INFO] 
+=== Testing Minimal Bark Model Initialization ===
+2025-04-13 13:23:30,565 [INFO] Creating minimal Bark model
+2025-04-13 13:23:30,565 [INFO] Created minimal Bark config at model_cache/bark/minimal_config.json
+2025-04-13 13:23:30,565 [ERROR] Failed to create minimal Bark model: ModelConfig.__init__() got an unexpected keyword argument 'version'
+2025-04-13 13:23:30,565 [INFO] 
+=== Testing Minimal Bark Pipeline with Codec ===
+2025-04-13 13:23:30,565 [INFO] Creating minimal Bark pipeline
+2025-04-13 13:23:30,565 [INFO] Creating minimal Encodec model
+2025-04-13 13:23:30,565 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,567 [INFO] Successfully created minimal Encodec model
+2025-04-13 13:23:30,567 [INFO] Initialized minimal Bark pipeline
+2025-04-13 13:23:30,567 [INFO] Successfully created minimal Bark pipeline with codec
+2025-04-13 13:23:30,567 [INFO] 
+=== Minimal Model Initialization Results ===
+2025-04-13 13:23:30,567 [INFO] kokoro: SUCCESS
+2025-04-13 13:23:30,567 [INFO] encodec: SUCCESS
+2025-04-13 13:23:30,567 [INFO] bark: FAILED
+2025-04-13 13:23:30,567 [INFO] bark_pipeline: SUCCESS
+2025-04-13 13:23:30,569 [INFO] 
+=== Testing Encodec Encoder Build ===
+2025-04-13 13:23:30,569 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,569 [INFO] Successfully built minimal Encodec encoder
+2025-04-13 13:23:30,569 [INFO] 
+=== Testing Encodec Decoder Build ===
+2025-04-13 13:23:30,569 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,569 [INFO] Successfully built minimal Encodec decoder
+2025-04-13 13:23:30,569 [INFO] 
+=== Testing Combined Encodec Build ===
+2025-04-13 13:23:30,570 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,570 [INFO] Successfully built minimal Encodec encoder
+2025-04-13 13:23:30,570 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,570 [INFO] Successfully built minimal Encodec decoder
+2025-04-13 13:23:30,570 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,570 [INFO] Successfully built minimal Encodec from components
+2025-04-13 13:23:30,570 [INFO] 
+=== Testing Bark with Verified Codec ===
+2025-04-13 13:23:30,570 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,570 [INFO] Successfully built minimal Encodec encoder
+2025-04-13 13:23:30,570 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,570 [INFO] Successfully built minimal Encodec decoder
+2025-04-13 13:23:30,570 [INFO] Created minimal Encodec config at model_cache/encodec/minimal_config.json
+2025-04-13 13:23:30,570 [INFO] Successfully built minimal Encodec from components
+2025-04-13 13:23:30,570 [INFO] Successfully built Bark with verified codec
+2025-04-13 13:23:30,570 [INFO] 
+=== Incremental Model Building Results ===
+2025-04-13 13:23:30,570 [INFO] encodec_encoder: SUCCESS
+2025-04-13 13:23:30,570 [INFO] encodec_decoder: SUCCESS
+2025-04-13 13:23:30,570 [INFO] encodec_combined: SUCCESS
+2025-04-13 13:23:30,570 [INFO] bark_with_codec: SUCCESS

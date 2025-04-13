@@ -1,0 +1,11 @@
+{
+  "venv_dir": "/Users/ZachM/Projects/mlx-audio-ui/tts-debug-venv",
+  "cache_dir": "/Users/ZachM/Projects/mlx-audio-ui/model_cache",
+  "environment_variables": {
+    "TRANSFORMERS_CACHE": "model_cache/transformers",
+    "HF_HOME": "model_cache/huggingface",
+    "MLX_AUDIO_CACHE": "model_cache/mlx_audio",
+    "PYTHONPATH": "/Users/ZachM/Projects/mlx-audio-ui"
+  },
+  "creation_time": "Sun Apr 13 13:23:24 EDT 2025"
+}

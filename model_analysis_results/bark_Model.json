@@ -1,0 +1,29 @@
+{
+  "model_class": "Model",
+  "module": "mlx_audio.tts.models.bark.bark",
+  "parameters": [
+    {
+      "name": "config",
+      "type": "<class 'mlx_audio.tts.models.bark.bark.ModelConfig'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": ""
+    },
+    {
+      "name": "config",
+      "type": "<class 'mlx_audio.tts.models.bark.bark.ModelConfig'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": "Instance of ModelConfig"
+    }
+  ],
+  "children": {},
+  "parameter_count": {},
+  "initialization_trace": [
+    "LogRecord.__init__ in __init__.py",
+    "LogRecord.__init__ in __init__.py",
+    "TracebackException.__init__ in _formatting.py",
+    "FrameSummary.__init__ in traceback.py",
+    "_ExceptionPrintContext.__init__ in _formatting.py"
+  ]
+}

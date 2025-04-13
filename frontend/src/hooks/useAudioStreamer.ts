@@ -1,6 +1,7 @@
-import { useRef, useCallback, useState, useEffect } from 'react'; // Import useEffect
+import { useRef, useCallback, useState, useEffect } from 'react'; 
 import { useAppStore, PlaybackState } from '../store';
 import { fetchTTSAudioStream } from '../services/ttsApi';
+import { saveToHistory } from '../utils/historyStorage';
 
 // Define the structure for queued audio buffers
 interface DecodedAudioChunk {
@@ -22,6 +23,9 @@ export interface AudioStreamerControls {
   resume: () => Promise<void>; // Basic resume for now
   stop: () => void;
   adjustSpeed: (newSpeed: number) => void;
+  // Expose audio context and source node for visualizer
+  getAudioContext: () => AudioContext | null;
+  getCurrentSourceNode: () => AudioBufferSourceNode | null;
 }
 
 export function useAudioStreamer(): AudioStreamerControls {
@@ -31,6 +35,7 @@ export function useAudioStreamer(): AudioStreamerControls {
     _setErrorMessage,
     _setTotalChunks,
     _setCurrentChunkIndex,
+    _setHighlightedTextRange,
   } = useAppStore.getState();
   const currentSpeed = useAppStore((state) => state.speed); // Read speed directly
 
@@ -42,6 +47,7 @@ export function useAudioStreamer(): AudioStreamerControls {
   const nextTokenIndexRef = useRef<number>(0); // Tracks the index of the *next* chunk to play
   const isFetchingRef = useRef<boolean>(false);
   const currentPlaybackParamsRef = useRef<PlaybackParams | null>(null); // Store params for resume
+  const textChunksRef = useRef<{start: number, end: number}[]>([]); // Store text chunks positions for highlighting
   const leftoverBytesRef = useRef<Uint8Array | null>(null); // Buffer for leftover bytes
 
   // Internal state for the hook if needed (e.g., sample rate)
@@ -65,6 +71,60 @@ export function useAudioStreamer(): AudioStreamerControls {
     return audioContextRef.current;
   }, []);
 
+  // Helper function to split text into chunks for highlighting
+  const splitTextIntoChunks = useCallback((text: string, numChunks: number): {start: number, end: number}[] => {
+    // Simple approach: divide text into roughly equal chunks
+    // For a more sophisticated approach, you could split on sentences or natural breaks
+    
+    const chunks: {start: number, end: number}[] = [];
+    const textLength = text.length;
+    
+    if (numChunks <= 0 || textLength === 0) {
+      return chunks;
+    }
+    
+    // First try to split on sentences for more natural boundaries
+    const sentenceRegex = /[.!?]+\s+/g;
+    let match;
+    const sentenceBoundaries: number[] = [];
+    
+    // Find all sentence boundaries
+    while ((match = sentenceRegex.exec(text)) !== null) {
+      sentenceBoundaries.push(match.index + match[0].length);
+    }
+    
+    // If we have enough sentence boundaries, use them to create chunks
+    if (sentenceBoundaries.length >= numChunks - 1) {
+      // Calculate how many sentences per chunk
+      const sentencesPerChunk = Math.ceil(sentenceBoundaries.length / numChunks);
+      
+      let startPos = 0;
+      for (let i = 0; i < numChunks; i++) {
+        const boundaryIndex = Math.min((i + 1) * sentencesPerChunk - 1, sentenceBoundaries.length - 1);
+        
+        // If this is the last chunk, use text length as end
+        if (i === numChunks - 1) {
+          chunks.push({ start: startPos, end: textLength });
+        } else if (boundaryIndex >= 0) {
+          const endPos = sentenceBoundaries[boundaryIndex];
+          chunks.push({ start: startPos, end: endPos });
+          startPos = endPos;
+        }
+      }
+    } else {
+      // Fallback: divide text into equal chunks if not enough sentence boundaries
+      const chunkSize = Math.ceil(textLength / numChunks);
+      
+      for (let i = 0; i < numChunks; i++) {
+        const start = i * chunkSize;
+        const end = Math.min((i + 1) * chunkSize, textLength);
+        chunks.push({ start, end });
+      }
+    }
+    
+    return chunks;
+  }, []);
+
   const cleanup = useCallback(() => {
     console.log('Cleaning up audio resources...');
     readerRef.current?.cancel().catch(() => {}); // Cancel stream reading
@@ -83,10 +143,15 @@ export function useAudioStreamer(): AudioStreamerControls {
     nextTokenIndexRef.current = 0;
     isFetchingRef.current = false;
     currentPlaybackParamsRef.current = null;
+    
+    // Clear text highlighting
+    _setHighlightedTextRange(null);
+    textChunksRef.current = [];
+    
     // Optionally close context if not needed immediately
     // audioContextRef.current?.close();
     // audioContextRef.current = null;
-  }, []);
+  }, [_setHighlightedTextRange]); // Added _setHighlightedTextRange as dependency
 
   const _decodeSentenceData = useCallback(
     async (bytes: Uint8Array): Promise<AudioBuffer | null> => {
@@ -169,6 +234,13 @@ export function useAudioStreamer(): AudioStreamerControls {
         currentSourceNodeRef.current = sourceNode; // Store the currently playing node
         _setPlaybackState('Playing');
         _setCurrentChunkIndex(index); // Update store with the index of the chunk NOW playing
+        
+        // Update text highlighting if we have text chunks calculated
+        if (textChunksRef.current.length > 0 && index >= 0 && index < textChunksRef.current.length) {
+          _setHighlightedTextRange(textChunksRef.current[index]);
+          console.log(`Highlighting text range: ${JSON.stringify(textChunksRef.current[index])}`);
+        }
+        
         console.log(`Playing chunk ${index} (Speed: ${currentSpeed}x)`);
 
       } catch (error) {
@@ -178,8 +250,8 @@ export function useAudioStreamer(): AudioStreamerControls {
          cleanup();
       }
     },
-    // Add _handlePlaybackEnd to dependencies
-    [getAudioContext, currentSpeed, _handlePlaybackEnd, _setPlaybackState, _setCurrentChunkIndex, _setErrorMessage, cleanup]
+    // Add _handlePlaybackEnd and _setHighlightedTextRange to dependencies
+    [getAudioContext, currentSpeed, _handlePlaybackEnd, _setPlaybackState, _setCurrentChunkIndex, _setHighlightedTextRange, _setErrorMessage, cleanup]
   );
 
 
@@ -316,6 +388,13 @@ export function useAudioStreamer(): AudioStreamerControls {
       cleanup();
       _setPlaybackState('Buffering'); // Update Zustand state via action
       currentPlaybackParamsRef.current = params; // Store for potential resume
+      
+      // Save the text to history when playback starts
+      saveToHistory({
+        text: params.text,
+        voice: params.voice,
+        title: '' // Empty title will trigger auto-generation in the history utility
+      });
 
       try {
         const response = await fetchTTSAudioStream(params.text, params.voice, params.speed);
@@ -332,6 +411,11 @@ export function useAudioStreamer(): AudioStreamerControls {
         setSampleRate(backendSampleRate); // Set internal state for decoder
         console.log(`Received headers: TotalChunks=${backendTotalChunks}, SampleRate=${backendSampleRate}`);
 
+        // Calculate text chunks for highlighting based on the expected number of audio chunks
+        if (backendTotalChunks > 0) {
+          textChunksRef.current = splitTextIntoChunks(params.text, backendTotalChunks);
+          console.log(`Created ${textChunksRef.current.length} text chunks for highlighting`);
+        }
 
         if (!response.body) {
           throw new Error('Response body is null.');
@@ -350,7 +434,7 @@ export function useAudioStreamer(): AudioStreamerControls {
         cleanup();
       }
     },
-    [cleanup, _setPlaybackState, _setTotalChunks, _setErrorMessage, fetchTTSAudioStream, _fetchAndDecodeLoop]
+    [cleanup, _setPlaybackState, _setTotalChunks, _setErrorMessage, fetchTTSAudioStream, _fetchAndDecodeLoop, splitTextIntoChunks]
   );
 
   const pause = useCallback(() => {
@@ -399,7 +483,7 @@ export function useAudioStreamer(): AudioStreamerControls {
 
   const stop = useCallback(() => {
     console.log('Stop requested.');
-    cleanup(); // Perform full cleanup
+    cleanup(); // Perform full cleanup (this also clears highlighting)
     _setPlaybackState('Stopped'); // Set final state
     _setCurrentChunkIndex(-1); // Reset index
     _setTotalChunks(0); // Reset total
@@ -417,12 +501,15 @@ export function useAudioStreamer(): AudioStreamerControls {
    }, []);
 
 
-  // Return the control functions
+  // Return the control functions and audio nodes
   return {
     play,
     pause,
     resume,
     stop,
     adjustSpeed,
+    // Add getters for audio context and source node
+    getAudioContext: () => audioContextRef.current,
+    getCurrentSourceNode: () => currentSourceNodeRef.current,
   };
 }

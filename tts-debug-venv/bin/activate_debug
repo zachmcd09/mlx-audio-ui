@@ -1,0 +1,5 @@
+#!/bin/bash
+export TRANSFORMERS_CACHE=model_cache/transformers
+export HF_HOME=model_cache/huggingface
+export MLX_AUDIO_CACHE=model_cache/mlx_audio
+export PYTHONPATH=/Users/ZachM/Projects/mlx-audio-ui

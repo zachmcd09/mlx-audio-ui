@@ -1,0 +1,42 @@
+2025-04-13 13:23:26,211 [INFO] Analyzing model class: Model
+2025-04-13 13:23:26,211 [INFO] Config class ModelConfig requires 14 parameters
+2025-04-13 13:23:26,211 [WARNING] Could not create minimal config: ModelConfig.__init__() missing 4 required positional arguments: 'istftnet', 'max_conv_dim', 'plbert', and 'vocab'
+2025-04-13 13:23:26,212 [WARNING] Could not create minimal model instance: Model.__init__() got an unexpected keyword argument 'lang_code'
+2025-04-13 13:23:26,212 [INFO] Saved analysis to model_analysis_results/kokoro_Model.json
+2025-04-13 13:23:26,212 [INFO] Analyzing model class: KokoroPipeline
+2025-04-13 13:23:26,212 [WARNING] Could not create minimal model instance: KokoroPipeline.__init__() missing 1 required positional argument: 'model'
+2025-04-13 13:23:26,213 [INFO] Saved analysis to model_analysis_results/kokoro_pipeline_KokoroPipeline.json
+2025-04-13 13:23:27,718 [INFO] Analyzing model class: Model
+2025-04-13 13:23:27,718 [INFO] Config class ModelConfig requires 18 parameters
+2025-04-13 13:23:27,718 [WARNING] Could not create minimal config: ModelConfig.__init__() missing 4 required positional arguments: 'semantic_config', 'coarse_acoustics_config', 'fine_acoustics_config', and 'codec_config'
+2025-04-13 13:23:27,718 [WARNING] Could not create minimal model instance: Model.__init__() got an unexpected keyword argument 'repo_id'
+2025-04-13 13:23:27,719 [INFO] Saved analysis to model_analysis_results/bark_Model.json
+2025-04-13 13:23:27,719 [INFO] Analyzing model class: BarkPipeline
+2025-04-13 13:23:27,719 [INFO] Initializing BarkPipeline with repo_id: dummy/repo
+2025-04-13 13:23:27,719 [INFO] Loading BertTokenizer...
+2025-04-13 13:23:28,043 [INFO] Creating Bark model...
+2025-04-13 13:23:28,285 [INFO] Downloading or loading model weights from dummy/repo...
+2025-04-13 13:23:28,315 [ERROR] Failed to download model weights: 401 Client Error. (Request ID: Root=1-67fbf310-160bd87a742f28b1306e33f9;a289daaf-65fe-487f-b593-4b9ea77d6c77)
+
+Repository Not Found for url: https://huggingface.co/api/models/dummy/repo/revision/main.
+Please make sure you specified the correct `repo_id` and `repo_type`.
+If you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication
+Invalid username or password.
+2025-04-13 13:23:28,315 [ERROR] Error initializing BarkPipeline: Failed to download model weights: 401 Client Error. (Request ID: Root=1-67fbf310-160bd87a742f28b1306e33f9;a289daaf-65fe-487f-b593-4b9ea77d6c77)
+
+Repository Not Found for url: https://huggingface.co/api/models/dummy/repo/revision/main.
+Please make sure you specified the correct `repo_id` and `repo_type`.
+If you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication
+Invalid username or password.
+2025-04-13 13:23:28,315 [WARNING] Could not create minimal model instance: Failed to download model weights: 401 Client Error. (Request ID: Root=1-67fbf310-160bd87a742f28b1306e33f9;a289daaf-65fe-487f-b593-4b9ea77d6c77)
+
+Repository Not Found for url: https://huggingface.co/api/models/dummy/repo/revision/main.
+Please make sure you specified the correct `repo_id` and `repo_type`.
+If you are trying to access a private or gated repo, make sure you are authenticated. For more details, see https://huggingface.co/docs/huggingface_hub/authentication
+Invalid username or password.
+2025-04-13 13:23:28,320 [INFO] Saved analysis to model_analysis_results/bark_pipeline_BarkPipeline.json
+2025-04-13 13:23:28,320 [INFO] Analyzing model class: Encodec
+2025-04-13 13:23:28,320 [INFO] Config class EncodecConfig requires 24 parameters
+2025-04-13 13:23:28,320 [INFO] Created minimal config instance for EncodecConfig
+2025-04-13 13:23:28,321 [WARNING] Could not create minimal model instance: list index out of range
+2025-04-13 13:23:28,322 [INFO] Saved analysis to model_analysis_results/encodec_Encodec.json

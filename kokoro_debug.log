@@ -1,0 +1,229 @@
+2025-04-13 16:49:41,123 - kokoro_debug - INFO - ==================================================
+2025-04-13 16:49:41,124 - kokoro_debug - INFO - Starting Kokoro TTS diagnostic test
+2025-04-13 16:49:41,124 - kokoro_debug - INFO - ==================================================
+2025-04-13 16:49:41,124 - kokoro_debug - INFO - Initializing Kokoro model...
+2025-04-13 16:49:41,126 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2025-04-13 16:49:41,258 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /prince-canuma/Kokoro-82M/resolve/main/config.json HTTP/1.1" 200 0
+2025-04-13 16:49:41,280 - kokoro_debug - INFO - Model initialization successful
+2025-04-13 16:49:43,237 - kokoro_debug - INFO - Pipeline initialization successful
+2025-04-13 16:49:43,237 - kokoro_debug - INFO - 
+=== Testing phrase 1/4 ===
+2025-04-13 16:49:43,237 - kokoro_debug - INFO - Text: "Hello, this is a test of the Kokoro text-to-speech system."
+2025-04-13 16:49:43,238 - kokoro_debug - INFO - 
+--- Testing with speed=0.8 ---
+2025-04-13 16:49:43,238 - root - DEBUG - Loading voice: af_heart
+2025-04-13 16:49:43,279 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /prince-canuma/Kokoro-82M/resolve/main/voices/af_heart.pt HTTP/1.1" 302 0
+2025-04-13 16:49:45,830 - kokoro_debug - INFO - [test_1_speed_8_raw_segment] Audio stats: min=-137479.890625, max=137538.609375, mean=0.047205, std=12558.836914
+2025-04-13 16:49:45,832 - kokoro_debug - INFO - [test_1_speed_8_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:45,832 - kokoro_debug - WARNING - [test_1_speed_8_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:45,833 - kokoro_debug - INFO - Text processing completed in 2.59 seconds
+2025-04-13 16:49:45,835 - kokoro_debug - INFO - [test_1_speed_8_concatenated] Audio stats: min=-137479.890625, max=137538.609375, mean=0.047205, std=12558.836914
+2025-04-13 16:49:45,837 - kokoro_debug - INFO - [test_1_speed_8_concatenated] Zero-crossing rate: 0.429483
+2025-04-13 16:49:45,837 - kokoro_debug - WARNING - [test_1_speed_8_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:45,839 - kokoro_debug - INFO - [test_1_speed_8_numpy] Audio stats: min=-137479.890625, max=137538.609375, mean=0.047207, std=12558.836914
+2025-04-13 16:49:45,840 - kokoro_debug - INFO - [test_1_speed_8_numpy] Zero-crossing rate: 0.429483
+2025-04-13 16:49:45,840 - kokoro_debug - WARNING - [test_1_speed_8_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:45,855 - kokoro_debug - INFO - Saved audio sample to debug_output/test_1_speed_8.wav
+2025-04-13 16:49:45,861 - kokoro_debug - INFO - [test_1_speed_8_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000146, std=0.250352
+2025-04-13 16:49:45,861 - kokoro_debug - WARNING - [test_1_speed_8_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:45,862 - kokoro_debug - INFO - [test_1_speed_8_int16] Zero-crossing rate: 0.098034
+2025-04-13 16:49:45,863 - kokoro_debug - INFO - Saved PCM data to debug_output/test_1_speed_8.pcm
+2025-04-13 16:49:45,863 - kokoro_debug - INFO - 
+--- Testing with speed=1.0 ---
+2025-04-13 16:49:47,763 - kokoro_debug - INFO - [test_1_speed_10_raw_segment] Audio stats: min=-137530.468750, max=137490.718750, mean=0.157823, std=11357.343750
+2025-04-13 16:49:47,765 - kokoro_debug - INFO - [test_1_speed_10_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:47,765 - kokoro_debug - WARNING - [test_1_speed_10_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:47,765 - kokoro_debug - INFO - Text processing completed in 1.90 seconds
+2025-04-13 16:49:47,767 - kokoro_debug - INFO - [test_1_speed_10_concatenated] Audio stats: min=-137530.468750, max=137490.718750, mean=0.157823, std=11357.343750
+2025-04-13 16:49:47,768 - kokoro_debug - INFO - [test_1_speed_10_concatenated] Zero-crossing rate: 0.427763
+2025-04-13 16:49:47,769 - kokoro_debug - WARNING - [test_1_speed_10_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:47,771 - kokoro_debug - INFO - [test_1_speed_10_numpy] Audio stats: min=-137530.468750, max=137490.718750, mean=0.157823, std=11357.343750
+2025-04-13 16:49:47,772 - kokoro_debug - INFO - [test_1_speed_10_numpy] Zero-crossing rate: 0.427763
+2025-04-13 16:49:47,772 - kokoro_debug - WARNING - [test_1_speed_10_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:47,781 - kokoro_debug - INFO - Saved audio sample to debug_output/test_1_speed_10.wav
+2025-04-13 16:49:47,787 - kokoro_debug - INFO - [test_1_speed_10_int16] Audio stats: min=-1.000031, max=1.000000, mean=-0.000228, std=0.221900
+2025-04-13 16:49:47,787 - kokoro_debug - WARNING - [test_1_speed_10_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:47,788 - kokoro_debug - INFO - [test_1_speed_10_int16] Zero-crossing rate: 0.090976
+2025-04-13 16:49:47,789 - kokoro_debug - INFO - Saved PCM data to debug_output/test_1_speed_10.pcm
+2025-04-13 16:49:47,790 - kokoro_debug - INFO - 
+--- Testing with speed=1.2 ---
+2025-04-13 16:49:49,382 - kokoro_debug - INFO - [test_1_speed_12_raw_segment] Audio stats: min=-137460.187500, max=137514.453125, mean=0.330153, std=11532.881836
+2025-04-13 16:49:49,384 - kokoro_debug - INFO - [test_1_speed_12_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:49,384 - kokoro_debug - WARNING - [test_1_speed_12_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:49,384 - kokoro_debug - INFO - Text processing completed in 1.59 seconds
+2025-04-13 16:49:49,388 - kokoro_debug - INFO - [test_1_speed_12_concatenated] Audio stats: min=-137460.187500, max=137514.453125, mean=0.330153, std=11532.881836
+2025-04-13 16:49:49,389 - kokoro_debug - INFO - [test_1_speed_12_concatenated] Zero-crossing rate: 0.431538
+2025-04-13 16:49:49,389 - kokoro_debug - WARNING - [test_1_speed_12_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:49,391 - kokoro_debug - INFO - [test_1_speed_12_numpy] Audio stats: min=-137460.187500, max=137514.453125, mean=0.330154, std=11532.881836
+2025-04-13 16:49:49,391 - kokoro_debug - INFO - [test_1_speed_12_numpy] Zero-crossing rate: 0.431538
+2025-04-13 16:49:49,392 - kokoro_debug - WARNING - [test_1_speed_12_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:49,399 - kokoro_debug - INFO - Saved audio sample to debug_output/test_1_speed_12.wav
+2025-04-13 16:49:49,405 - kokoro_debug - INFO - [test_1_speed_12_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000828, std=0.226347
+2025-04-13 16:49:49,405 - kokoro_debug - WARNING - [test_1_speed_12_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:49,406 - kokoro_debug - INFO - [test_1_speed_12_int16] Zero-crossing rate: 0.091717
+2025-04-13 16:49:49,407 - kokoro_debug - INFO - Saved PCM data to debug_output/test_1_speed_12.pcm
+2025-04-13 16:49:49,407 - kokoro_debug - INFO - 
+=== Testing phrase 2/4 ===
+2025-04-13 16:49:49,407 - kokoro_debug - INFO - Text: "The quick brown fox jumps over the lazy dog."
+2025-04-13 16:49:49,407 - kokoro_debug - INFO - 
+--- Testing with speed=0.8 ---
+2025-04-13 16:49:51,364 - kokoro_debug - INFO - [test_2_speed_8_raw_segment] Audio stats: min=-137535.859375, max=137468.906250, mean=0.207296, std=12447.679688
+2025-04-13 16:49:51,366 - kokoro_debug - INFO - [test_2_speed_8_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:51,366 - kokoro_debug - WARNING - [test_2_speed_8_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:51,367 - kokoro_debug - INFO - Text processing completed in 1.96 seconds
+2025-04-13 16:49:51,372 - kokoro_debug - INFO - [test_2_speed_8_concatenated] Audio stats: min=-137535.859375, max=137468.906250, mean=0.207296, std=12447.679688
+2025-04-13 16:49:51,374 - kokoro_debug - INFO - [test_2_speed_8_concatenated] Zero-crossing rate: 0.428883
+2025-04-13 16:49:51,374 - kokoro_debug - WARNING - [test_2_speed_8_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:51,378 - kokoro_debug - INFO - [test_2_speed_8_numpy] Audio stats: min=-137535.859375, max=137468.906250, mean=0.207294, std=12447.679688
+2025-04-13 16:49:51,379 - kokoro_debug - INFO - [test_2_speed_8_numpy] Zero-crossing rate: 0.428883
+2025-04-13 16:49:51,379 - kokoro_debug - WARNING - [test_2_speed_8_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:51,393 - kokoro_debug - INFO - Saved audio sample to debug_output/test_2_speed_8.wav
+2025-04-13 16:49:51,401 - kokoro_debug - INFO - [test_2_speed_8_int16] Audio stats: min=-1.000031, max=1.000000, mean=-0.000463, std=0.244492
+2025-04-13 16:49:51,401 - kokoro_debug - WARNING - [test_2_speed_8_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:51,403 - kokoro_debug - INFO - [test_2_speed_8_int16] Zero-crossing rate: 0.103919
+2025-04-13 16:49:51,404 - kokoro_debug - INFO - Saved PCM data to debug_output/test_2_speed_8.pcm
+2025-04-13 16:49:51,404 - kokoro_debug - INFO - 
+--- Testing with speed=1.0 ---
+2025-04-13 16:49:52,969 - kokoro_debug - INFO - [test_2_speed_10_raw_segment] Audio stats: min=-137503.250000, max=137535.125000, mean=-0.695708, std=12011.378906
+2025-04-13 16:49:52,971 - kokoro_debug - INFO - [test_2_speed_10_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:52,971 - kokoro_debug - WARNING - [test_2_speed_10_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:52,971 - kokoro_debug - INFO - Text processing completed in 1.57 seconds
+2025-04-13 16:49:52,973 - kokoro_debug - INFO - [test_2_speed_10_concatenated] Audio stats: min=-137503.250000, max=137535.125000, mean=-0.695708, std=12011.378906
+2025-04-13 16:49:52,975 - kokoro_debug - INFO - [test_2_speed_10_concatenated] Zero-crossing rate: 0.430354
+2025-04-13 16:49:52,975 - kokoro_debug - WARNING - [test_2_speed_10_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:52,976 - kokoro_debug - INFO - [test_2_speed_10_numpy] Audio stats: min=-137503.250000, max=137535.125000, mean=-0.695708, std=12011.378906
+2025-04-13 16:49:52,977 - kokoro_debug - INFO - [test_2_speed_10_numpy] Zero-crossing rate: 0.430354
+2025-04-13 16:49:52,977 - kokoro_debug - WARNING - [test_2_speed_10_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:52,986 - kokoro_debug - INFO - Saved audio sample to debug_output/test_2_speed_10.wav
+2025-04-13 16:49:52,991 - kokoro_debug - INFO - [test_2_speed_10_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000145, std=0.233255
+2025-04-13 16:49:52,991 - kokoro_debug - WARNING - [test_2_speed_10_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:52,992 - kokoro_debug - INFO - [test_2_speed_10_int16] Zero-crossing rate: 0.099972
+2025-04-13 16:49:52,993 - kokoro_debug - INFO - Saved PCM data to debug_output/test_2_speed_10.pcm
+2025-04-13 16:49:52,993 - kokoro_debug - INFO - 
+--- Testing with speed=1.2 ---
+2025-04-13 16:49:54,269 - kokoro_debug - INFO - [test_2_speed_12_raw_segment] Audio stats: min=-137527.343750, max=137518.593750, mean=0.120904, std=12383.658203
+2025-04-13 16:49:54,272 - kokoro_debug - INFO - [test_2_speed_12_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:54,272 - kokoro_debug - WARNING - [test_2_speed_12_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:54,272 - kokoro_debug - INFO - Text processing completed in 1.28 seconds
+2025-04-13 16:49:54,275 - kokoro_debug - INFO - [test_2_speed_12_concatenated] Audio stats: min=-137527.343750, max=137518.593750, mean=0.120904, std=12383.658203
+2025-04-13 16:49:54,276 - kokoro_debug - INFO - [test_2_speed_12_concatenated] Zero-crossing rate: 0.431144
+2025-04-13 16:49:54,277 - kokoro_debug - WARNING - [test_2_speed_12_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:54,281 - kokoro_debug - INFO - [test_2_speed_12_numpy] Audio stats: min=-137527.343750, max=137518.593750, mean=0.120906, std=12383.658203
+2025-04-13 16:49:54,282 - kokoro_debug - INFO - [test_2_speed_12_numpy] Zero-crossing rate: 0.431144
+2025-04-13 16:49:54,282 - kokoro_debug - WARNING - [test_2_speed_12_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:54,295 - kokoro_debug - INFO - Saved audio sample to debug_output/test_2_speed_12.wav
+2025-04-13 16:49:54,301 - kokoro_debug - INFO - [test_2_speed_12_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000269, std=0.245831
+2025-04-13 16:49:54,301 - kokoro_debug - WARNING - [test_2_speed_12_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:54,302 - kokoro_debug - INFO - [test_2_speed_12_int16] Zero-crossing rate: 0.108676
+2025-04-13 16:49:54,303 - kokoro_debug - INFO - Saved PCM data to debug_output/test_2_speed_12.pcm
+2025-04-13 16:49:54,304 - kokoro_debug - INFO - 
+=== Testing phrase 3/4 ===
+2025-04-13 16:49:54,304 - kokoro_debug - INFO - Text: "This is a longer sentence that might cause processing issues due to its length and complexity in the neural network pipeline."
+2025-04-13 16:49:54,304 - kokoro_debug - INFO - 
+--- Testing with speed=0.8 ---
+2025-04-13 16:49:59,545 - kokoro_debug - INFO - [test_3_speed_8_raw_segment] Audio stats: min=-137538.703125, max=137538.156250, mean=-0.160971, std=13790.303711
+2025-04-13 16:49:59,548 - kokoro_debug - INFO - [test_3_speed_8_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:49:59,548 - kokoro_debug - WARNING - [test_3_speed_8_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:49:59,548 - kokoro_debug - INFO - Text processing completed in 5.24 seconds
+2025-04-13 16:49:59,552 - kokoro_debug - INFO - [test_3_speed_8_concatenated] Audio stats: min=-137538.703125, max=137538.156250, mean=-0.160971, std=13790.303711
+2025-04-13 16:49:59,556 - kokoro_debug - INFO - [test_3_speed_8_concatenated] Zero-crossing rate: 0.438958
+2025-04-13 16:49:59,556 - kokoro_debug - WARNING - [test_3_speed_8_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:49:59,559 - kokoro_debug - INFO - [test_3_speed_8_numpy] Audio stats: min=-137538.703125, max=137538.156250, mean=-0.160971, std=13790.303711
+2025-04-13 16:49:59,562 - kokoro_debug - INFO - [test_3_speed_8_numpy] Zero-crossing rate: 0.438958
+2025-04-13 16:49:59,562 - kokoro_debug - WARNING - [test_3_speed_8_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:49:59,580 - kokoro_debug - INFO - Saved audio sample to debug_output/test_3_speed_8.wav
+2025-04-13 16:49:59,591 - kokoro_debug - INFO - [test_3_speed_8_int16] Audio stats: min=-1.000031, max=1.000000, mean=-0.000228, std=0.269292
+2025-04-13 16:49:59,591 - kokoro_debug - WARNING - [test_3_speed_8_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:49:59,594 - kokoro_debug - INFO - [test_3_speed_8_int16] Zero-crossing rate: 0.091274
+2025-04-13 16:49:59,596 - kokoro_debug - INFO - Saved PCM data to debug_output/test_3_speed_8.pcm
+2025-04-13 16:49:59,596 - kokoro_debug - INFO - 
+--- Testing with speed=1.0 ---
+2025-04-13 16:50:03,987 - kokoro_debug - INFO - [test_3_speed_10_raw_segment] Audio stats: min=-137497.906250, max=137516.500000, mean=-0.255669, std=11069.078125
+2025-04-13 16:50:03,990 - kokoro_debug - INFO - [test_3_speed_10_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:50:03,990 - kokoro_debug - WARNING - [test_3_speed_10_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:50:03,990 - kokoro_debug - INFO - Text processing completed in 4.39 seconds
+2025-04-13 16:50:03,995 - kokoro_debug - INFO - [test_3_speed_10_concatenated] Audio stats: min=-137497.906250, max=137516.500000, mean=-0.255669, std=11069.078125
+2025-04-13 16:50:03,999 - kokoro_debug - INFO - [test_3_speed_10_concatenated] Zero-crossing rate: 0.436653
+2025-04-13 16:50:03,999 - kokoro_debug - WARNING - [test_3_speed_10_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:50:04,003 - kokoro_debug - INFO - [test_3_speed_10_numpy] Audio stats: min=-137497.906250, max=137516.500000, mean=-0.255668, std=11069.078125
+2025-04-13 16:50:04,005 - kokoro_debug - INFO - [test_3_speed_10_numpy] Zero-crossing rate: 0.436653
+2025-04-13 16:50:04,005 - kokoro_debug - WARNING - [test_3_speed_10_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:50:04,021 - kokoro_debug - INFO - Saved audio sample to debug_output/test_3_speed_10.wav
+2025-04-13 16:50:04,029 - kokoro_debug - INFO - [test_3_speed_10_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000053, std=0.216964
+2025-04-13 16:50:04,029 - kokoro_debug - WARNING - [test_3_speed_10_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:50:04,032 - kokoro_debug - INFO - [test_3_speed_10_int16] Zero-crossing rate: 0.066966
+2025-04-13 16:50:04,034 - kokoro_debug - INFO - Saved PCM data to debug_output/test_3_speed_10.pcm
+2025-04-13 16:50:04,034 - kokoro_debug - INFO - 
+--- Testing with speed=1.2 ---
+2025-04-13 16:50:07,791 - kokoro_debug - INFO - [test_3_speed_12_raw_segment] Audio stats: min=-137524.500000, max=137509.875000, mean=0.063944, std=12038.311523
+2025-04-13 16:50:07,795 - kokoro_debug - INFO - [test_3_speed_12_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:50:07,795 - kokoro_debug - WARNING - [test_3_speed_12_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:50:07,795 - kokoro_debug - INFO - Text processing completed in 3.76 seconds
+2025-04-13 16:50:07,801 - kokoro_debug - INFO - [test_3_speed_12_concatenated] Audio stats: min=-137524.500000, max=137509.875000, mean=0.063944, std=12038.311523
+2025-04-13 16:50:07,803 - kokoro_debug - INFO - [test_3_speed_12_concatenated] Zero-crossing rate: 0.436635
+2025-04-13 16:50:07,804 - kokoro_debug - WARNING - [test_3_speed_12_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:50:07,807 - kokoro_debug - INFO - [test_3_speed_12_numpy] Audio stats: min=-137524.500000, max=137509.875000, mean=0.063945, std=12038.311523
+2025-04-13 16:50:07,809 - kokoro_debug - INFO - [test_3_speed_12_numpy] Zero-crossing rate: 0.436635
+2025-04-13 16:50:07,809 - kokoro_debug - WARNING - [test_3_speed_12_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:50:07,824 - kokoro_debug - INFO - Saved audio sample to debug_output/test_3_speed_12.wav
+2025-04-13 16:50:07,831 - kokoro_debug - INFO - [test_3_speed_12_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000439, std=0.235264
+2025-04-13 16:50:07,831 - kokoro_debug - WARNING - [test_3_speed_12_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:50:07,833 - kokoro_debug - INFO - [test_3_speed_12_int16] Zero-crossing rate: 0.073974
+2025-04-13 16:50:07,834 - kokoro_debug - INFO - Saved PCM data to debug_output/test_3_speed_12.pcm
+2025-04-13 16:50:07,834 - kokoro_debug - INFO - 
+=== Testing phrase 4/4 ===
+2025-04-13 16:50:07,834 - kokoro_debug - INFO - Text: "Testing, one, two, three. Is this audio working correctly?"
+2025-04-13 16:50:07,834 - kokoro_debug - INFO - 
+--- Testing with speed=0.8 ---
+2025-04-13 16:50:10,339 - kokoro_debug - INFO - [test_4_speed_8_raw_segment] Audio stats: min=-137538.437500, max=137511.375000, mean=0.054213, std=12913.210938
+2025-04-13 16:50:10,341 - kokoro_debug - INFO - [test_4_speed_8_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:50:10,341 - kokoro_debug - WARNING - [test_4_speed_8_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:50:10,341 - kokoro_debug - INFO - Text processing completed in 2.51 seconds
+2025-04-13 16:50:10,349 - kokoro_debug - INFO - [test_4_speed_8_concatenated] Audio stats: min=-137538.437500, max=137511.375000, mean=0.054213, std=12913.210938
+2025-04-13 16:50:10,352 - kokoro_debug - INFO - [test_4_speed_8_concatenated] Zero-crossing rate: 0.432215
+2025-04-13 16:50:10,352 - kokoro_debug - WARNING - [test_4_speed_8_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:50:10,355 - kokoro_debug - INFO - [test_4_speed_8_numpy] Audio stats: min=-137538.437500, max=137511.375000, mean=0.054216, std=12913.210938
+2025-04-13 16:50:10,357 - kokoro_debug - INFO - [test_4_speed_8_numpy] Zero-crossing rate: 0.432215
+2025-04-13 16:50:10,357 - kokoro_debug - WARNING - [test_4_speed_8_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:50:10,371 - kokoro_debug - INFO - Saved audio sample to debug_output/test_4_speed_8.wav
+2025-04-13 16:50:10,377 - kokoro_debug - INFO - [test_4_speed_8_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.000034, std=0.251320
+2025-04-13 16:50:10,377 - kokoro_debug - WARNING - [test_4_speed_8_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:50:10,378 - kokoro_debug - INFO - [test_4_speed_8_int16] Zero-crossing rate: 0.103581
+2025-04-13 16:50:10,380 - kokoro_debug - INFO - Saved PCM data to debug_output/test_4_speed_8.pcm
+2025-04-13 16:50:10,380 - kokoro_debug - INFO - 
+--- Testing with speed=1.0 ---
+2025-04-13 16:50:12,314 - kokoro_debug - INFO - [test_4_speed_10_raw_segment] Audio stats: min=-137511.718750, max=137532.343750, mean=-0.138158, std=16389.841797
+2025-04-13 16:50:12,315 - kokoro_debug - INFO - [test_4_speed_10_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:50:12,316 - kokoro_debug - WARNING - [test_4_speed_10_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:50:12,316 - kokoro_debug - INFO - Text processing completed in 1.94 seconds
+2025-04-13 16:50:12,322 - kokoro_debug - INFO - [test_4_speed_10_concatenated] Audio stats: min=-137511.718750, max=137532.343750, mean=-0.138158, std=16389.841797
+2025-04-13 16:50:12,325 - kokoro_debug - INFO - [test_4_speed_10_concatenated] Zero-crossing rate: 0.433596
+2025-04-13 16:50:12,325 - kokoro_debug - WARNING - [test_4_speed_10_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:50:12,328 - kokoro_debug - INFO - [test_4_speed_10_numpy] Audio stats: min=-137511.718750, max=137532.343750, mean=-0.138156, std=16389.841797
+2025-04-13 16:50:12,330 - kokoro_debug - INFO - [test_4_speed_10_numpy] Zero-crossing rate: 0.433596
+2025-04-13 16:50:12,330 - kokoro_debug - WARNING - [test_4_speed_10_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:50:12,340 - kokoro_debug - INFO - Saved audio sample to debug_output/test_4_speed_10.wav
+2025-04-13 16:50:12,348 - kokoro_debug - INFO - [test_4_speed_10_int16] Audio stats: min=-1.000031, max=1.000000, mean=-0.000089, std=0.316946
+2025-04-13 16:50:12,348 - kokoro_debug - WARNING - [test_4_speed_10_int16] NOISE DETECTED: Audio has characteristics of noise (near-zero mean with significant std dev)
+2025-04-13 16:50:12,350 - kokoro_debug - INFO - [test_4_speed_10_int16] Zero-crossing rate: 0.140947
+2025-04-13 16:50:12,351 - kokoro_debug - INFO - Saved PCM data to debug_output/test_4_speed_10.pcm
+2025-04-13 16:50:12,351 - kokoro_debug - INFO - 
+--- Testing with speed=1.2 ---
+2025-04-13 16:50:14,071 - kokoro_debug - INFO - [test_4_speed_12_raw_segment] Audio stats: min=-137512.062500, max=137517.875000, mean=0.337531, std=15336.890625
+2025-04-13 16:50:14,073 - kokoro_debug - INFO - [test_4_speed_12_raw_segment] Zero-crossing rate: inf
+2025-04-13 16:50:14,073 - kokoro_debug - WARNING - [test_4_speed_12_raw_segment] High zero-crossing rate may indicate noise
+2025-04-13 16:50:14,073 - kokoro_debug - INFO - Text processing completed in 1.72 seconds
+2025-04-13 16:50:14,075 - kokoro_debug - INFO - [test_4_speed_12_concatenated] Audio stats: min=-137512.062500, max=137517.875000, mean=0.337531, std=15336.890625
+2025-04-13 16:50:14,076 - kokoro_debug - INFO - [test_4_speed_12_concatenated] Zero-crossing rate: 0.432985
+2025-04-13 16:50:14,076 - kokoro_debug - WARNING - [test_4_speed_12_concatenated] High zero-crossing rate may indicate noise
+2025-04-13 16:50:14,078 - kokoro_debug - INFO - [test_4_speed_12_numpy] Audio stats: min=-137512.062500, max=137517.875000, mean=0.337528, std=15336.890625
+2025-04-13 16:50:14,079 - kokoro_debug - INFO - [test_4_speed_12_numpy] Zero-crossing rate: 0.432985
+2025-04-13 16:50:14,079 - kokoro_debug - WARNING - [test_4_speed_12_numpy] High zero-crossing rate may indicate noise
+2025-04-13 16:50:14,086 - kokoro_debug - INFO - Saved audio sample to debug_output/test_4_speed_12.wav
+2025-04-13 16:50:14,090 - kokoro_debug - INFO - [test_4_speed_12_int16] Audio stats: min=-1.000031, max=1.000000, mean=0.001308, std=0.300286
+2025-04-13 16:50:14,090 - kokoro_debug - INFO - [test_4_speed_12_int16] Zero-crossing rate: 0.126008
+2025-04-13 16:50:14,091 - kokoro_debug - INFO - Saved PCM data to debug_output/test_4_speed_12.pcm
+2025-04-13 16:50:14,091 - kokoro_debug - INFO - 
+==================================================
+2025-04-13 16:50:14,091 - kokoro_debug - INFO - Diagnostic test completed
+2025-04-13 16:50:14,091 - kokoro_debug - INFO - ==================================================

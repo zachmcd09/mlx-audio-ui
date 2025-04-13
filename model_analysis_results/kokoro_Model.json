@@ -1,0 +1,36 @@
+{
+  "model_class": "Model",
+  "module": "mlx_audio.tts.models.kokoro.kokoro",
+  "parameters": [
+    {
+      "name": "config",
+      "type": "<class 'mlx_audio.tts.models.kokoro.kokoro.ModelConfig'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": ""
+    },
+    {
+      "name": "repo_id",
+      "type": "typing.Optional[str]",
+      "default_value": "None",
+      "is_required": false,
+      "description": ""
+    },
+    {
+      "name": "config",
+      "type": "<class 'mlx_audio.tts.models.kokoro.kokoro.ModelConfig'>",
+      "default_value": "None",
+      "is_required": true,
+      "description": "Instance of ModelConfig"
+    }
+  ],
+  "children": {},
+  "parameter_count": {},
+  "initialization_trace": [
+    "LogRecord.__init__ in __init__.py",
+    "LogRecord.__init__ in __init__.py",
+    "TracebackException.__init__ in _formatting.py",
+    "FrameSummary.__init__ in traceback.py",
+    "_ExceptionPrintContext.__init__ in _formatting.py"
+  ]
+}
