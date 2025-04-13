@@ -41,3 +41,4 @@ test.ipynb
 output/
 dev-venv/
 frontend/node-modules/*
+tts-debug-venv/*
